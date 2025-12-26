@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice #<span th:text="${invoice.invoiceNumber}"></span></title>
+    <link rel="stylesheet" th:href="@{/static/main.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .invoice-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        .invoice-actions {
+            margin-top: 2rem;
+            text-align: right;
+        }
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+        .status-pending { background-color: #fff3cd; color: #856404; }
+        .status-paid { background-color: #d4edda; color: #155724; }
+        .status-cancelled { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="invoice-container">
+            <div class="invoice-header">
+                <div>
+                    <h1>INVOICE</h1>
+                    <p>#<span th:text="${invoice.invoiceNumber}"></span></p>
+                    <p>Date: <span th:text="${#temporals.format(invoice.issueDate, 'MMMM dd, yyyy')}"></span></p>
+                    <p>Due Date: <span th:text="${#temporals.format(invoice.dueDate, 'MMMM dd, yyyy')}"></span></p>
+                </div>
+                <div class="text-right">
+                    <span class="status-badge" th:classappend="'status-' + ${invoice.status.toLowerCase()}" th:text="${invoice.status}">
+                        Pending
+                    </span>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col">
+                    <h3>Bill To:</h3>
+                    <p th:text="${invoice.customer.name}">Customer Name</p>
+                    <p th:text="${invoice.customer.address}">Customer Address</p>
+                    <p th:text="${invoice.customer.email}">customer@example.com</p>
+                    <p th:text="${invoice.customer.phone}">+1234567890</p>
+                </div>
+                <div class="col text-right">
+                    <h3>From:</h3>
+                    <p th:text="${company.name}">Company Name</p>
+                    <p th:text="${company.address}">Company Address</p>
+                    <p th:text="${company.email}">company@example.com</p>
+                    <p th:text="${company.phone}">+1234567890</p>
+                </div>
+            </div>
+
+            <table class="invoice-items">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Description</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${invoice.items}">
+                        <td th:text="${item.name}">Item Name</td>
+                        <td th:text="${item.description}">Item Description</td>
+                        <td class="text-center" th:text="${item.quantity}">1</td>
+                        <td class="text-right" th:text="${#numbers.formatDecimal(item.unitPrice, 1, 2, 'COMMA')}">0.00</td>
+                        <td class="text-right" th:text="${#numbers.formatDecimal(item.total, 1, 2, 'COMMA')}">0.00</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-right">Subtotal:</td>
+                        <td class="text-right" th:text="${#numbers.formatDecimal(invoice.subtotal, 1, 2, 'COMMA')}">0.00</td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" class="text-right">Tax (<span th:text="${invoice.taxRate}">0</span>%):</td>
+                        <td class="text-right" th:text="${#numbers.formatDecimal(invoice.taxAmount, 1, 2, 'COMMA')}">0.00</td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" class="text-right">Discount:</td>
+                        <td class="text-right" th:text="${#numbers.formatDecimal(invoice.discount, 1, 2, 'COMMA')}">0.00</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="4" class="text-right"><strong>Total:</strong></td>
+                        <td class="text-right"><strong th:text="'$' + ${#numbers.formatDecimal(invoice.total, 1, 2, 'COMMA')}">$0.00</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="invoice-notes" th:if="${invoice.notes}">
+                <h3>Notes</h3>
+                <p th:text="${invoice.notes}">Additional notes or special instructions go here.</p>
+            </div>
+
+            <div class="invoice-actions">
+                <a href="#" class="btn btn-primary" th:if="${invoice.status == 'PENDING'}">
+                    <i class="fas fa-credit-card"></i> Pay Now
+                </a>
+                <a href="#" class="btn btn-secondary" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print
+                </a>
+                <a th:href="@{/invoices/export/pdf/} + ${invoice.id}" class="btn btn-outline-secondary">
+                    <i class="fas fa-file-pdf"></i> Download PDF
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

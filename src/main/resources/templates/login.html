@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Warehouse Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .login-container {
+            display: flex;
+            min-height: calc(100vh - 56px);
+        }
+        
+        .login-illustration {
+            flex: 1;
+            background: linear-gradient(135deg, #0d6efd 0%, #0d6efd 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: white;
+            text-align: center;
+        }
+        
+        .login-form-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .login-form {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .login-logo i {
+            font-size: 3rem;
+            color: #0d6efd;
+            margin-bottom: 1rem;
+        }
+        
+        .login-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #212529;
+        }
+        
+        .login-subtitle {
+            color: #6c757d;
+            margin-bottom: 2rem;
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .form-footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #718096;
+        }
+        
+        .form-footer a {
+            color: #4361ee;
+            text-decoration: none;
+        }
+        
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .alert-error {
+            background-color: #fff5f5;
+            border: 1px solid #feb2b2;
+            color: #c53030;
+        }
+        
+        .alert-logout {
+            background-color: #f0fff4;
+            border: 1px solid #9ae6b4;
+            color: #2f855a;
+        }
+        
+        @media (max-width: 768px) {
+            .login-container {
+                flex-direction: column;
+            }
+            
+            .login-illustration {
+                padding: 3rem 1rem;
+            }
+            
+            .login-form-container {
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Simple header for login page -->
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-box-seam me-2"></i>Warehouse SB
+            </a>
+        </div>
+    </nav>
+
+    <div class="login-container">
+        <div class="login-illustration d-none d-lg-flex">
+            <div class="p-4">
+                <h2 class="display-5 fw-bold mb-3">Warehouse Management System</h2>
+                <p class="lead">Streamline your warehouse operations with our comprehensive solution</p>
+                <div class="mt-5">
+                    <i class="bi bi-shop-window" style="font-size: 10rem; opacity: 0.2;"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="login-form-container">
+            <div class="login-form">
+                <div class="login-logo">
+                    <i class="bi bi-box-seam"></i>
+                    <h1 class="login-title">Welcome Back</h1>
+                    <p class="login-subtitle">Sign in to continue to your dashboard</p>
+                </div>
+                
+                <form th:action="@{/login}" method="post">
+                    <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Invalid username or password.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    
+                    <div th:if="${param.logout}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        You have been logged out successfully.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   placeholder="Enter your username" required autofocus>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   placeholder="Enter your password" required>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="remember-me" name="remember-me">
+                            <label class="form-check-label" for="remember-me">Remember me</label>
+                        </div>
+                        <a href="#" class="text-decoration-none">Forgot password?</a>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-login mb-3">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                    </button>
+                    
+                    <div class="text-center mt-4">
+                        <p class="text-muted mb-0">Don't have an account?</p>
+                        <a href="#" class="text-decoration-none">Contact administrator</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Auto-hide alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                var alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+            
+            // Focus on username field by default
+            document.getElementById('username').focus();
+        });
+    </script>
+</body>
+</html>
