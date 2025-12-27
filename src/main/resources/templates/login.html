@@ -1,19 +1,126 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Login</title>
-    <link rel="stylesheet" href="/css/style.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Warehouse Management System</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link href="/css/login.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #f5f5f5;
+        }
+    </style>
 </head>
-<body>
-<h1>Login</h1>
-<form th:action="@{/login}" method="post">
-    <label>Username:</label>
-    <input type="text" name="username"/>
-    <br/>
-    <label>Password:</label>
-    <input type="password" name="password"/>
-    <br/>
-    <button type="submit">Login</button>
-</form>
+<body class="bg-light">
+    <div class="login-container">
+        <div class="login-form-container">
+            <form class="login-form" th:action="@{/login}" method="post">
+                <div class="login-logo">
+                    <h1 class="login-title">
+                        <i class="bi bi-box-seam"></i>
+                        Warehouse SB
+                    </h1>
+                    <p class="login-subtitle">Please sign in to continue</p>
+                </div>
+                
+                <!-- Error Alert -->
+                <div th:if="${param.error}" class="alert alert-error" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <div>Invalid username or password. Please try again.</div>
+                </div>
+                
+                <!-- Logout Alert -->
+                <div th:if="${param.logout}" class="alert alert-logout" role="alert">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <div>You have been logged out successfully.</div>
+                </div>
+                
+                <!-- Username Input -->
+                <div class="form-group">
+                    <label for="username" class="form-label">
+                        <i class="bi bi-person-fill me-1"></i> Username
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-person"></i>
+                        </span>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="Enter your username" required autofocus>
+                    </div>
+                </div>
+                
+                <!-- Password Input -->
+                <div class="form-group">
+                    <label for="password" class="form-label">
+                        <i class="bi bi-key-fill me-1"></i> Password
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-lock"></i>
+                        </span>
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="Enter your password" required>
+                    </div>
+                </div>
+                
+                <!-- Remember Me Checkbox -->
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" id="remember-me" name="remember-me">
+                    <label class="form-check-label" for="remember-me">
+                        Remember me
+                    </label>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-login">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </button>
+                
+                <!-- Footer -->
+                <div class="form-footer">
+                    <p class="mb-0">&copy; 2025 Warehouse SB. All rights reserved.</p>
+                    <div class="mt-2">
+                        <a href="#" class="text-decoration-none text-muted small">Forgot password?</a>
+                        <span class="mx-2">•</span>
+                        <a href="#" class="text-decoration-none text-muted small">Need help?</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Scripts -->
+    <script>
+        // Add animation class to form on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('.login-form');
+            if (form) {
+                form.classList.add('animate__animated', 'animate__fadeInUp');
+            }
+            
+            // Toggle password visibility
+            const togglePassword = document.querySelector('.toggle-password');
+            const passwordInput = document.querySelector('#password');
+            
+            if (togglePassword && passwordInput) {
+                togglePassword.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    this.classList.toggle('bi-eye');
+                    this.classList.toggle('bi-eye-slash');
+                });
+            }
+        });
+    </script>
 </body>
 </html>
