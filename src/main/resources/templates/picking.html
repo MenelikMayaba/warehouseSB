@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Picking</title>
+    <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+<h1>Priority Orders</h1>
+<table>
+    <tr><th>ID</th><th>Status</th><th>Action</th></tr>
+    <tr th:each="invoice : ${invoices}">
+        <td th:text="${invoice.id}"></td>
+        <td th:text="${invoice.status}"></td>
+        <td>
+            <form th:action="@{/picking/pick/{id}(id=${invoice.id})}" method="post">
+                <button type="submit">Pick</button>
+            </form>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

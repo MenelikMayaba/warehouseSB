@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Audit Log</title>
+    <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+<header style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background-color: #f8f9fa; border-bottom: 1px solid #e1e1e1;">
+    <h1>Audit Log</h1>
+    <div>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" style="padding: 5px 15px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Logout
+            </button>
+        </form>
+    </div>
+</header>
+
+<div class="user-management">
+    <h2>User Management</h2>
+
+    <!-- Add User Form -->
+    <div class="add-user-form">
+        <h3>Add New User</h3>
+        <form th:action="@{/admin/users}" method="post" th:object="${userDto}">
+            <div>
+                <label>Username:</label>
+                <input type="text" th:field="*{username}" required>
+            </div>
+            <div>
+                <label>Password:</label>
+                <input type="password" th:field="*{password}" required>
+            </div>
+            <div>
+                <label>Roles:</label>
+                <div th:each="role : ${allRoles}">
+                    <input type="checkbox" th:value="${role}" th:field="*{roles}">
+                    <span th:text="${role}"></span>
+                </div>
+            </div>
+            <button type="submit">Create User</button>
+        </form>
+    </div>
+
+    <!-- Users List -->
+    <div class="users-list">
+        <h3>Existing Users</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>Username</th>
+                <th>Roles</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="user : ${users}">
+                <td th:text="${user.username}"></td>
+                <td>
+                    <span th:each="role : ${user.roles}" th:text="${role} + ' '"></span>
+                </td>
+                <td>
+                    <form th:action="@{/admin/users/{id}/delete(id=${user.id})}" method="post"
+                          th:if="${user.username != 'admin'}" style="display: inline;">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add some basic styling -->
+<style>
+    .user-management { margin-top: 2rem; }
+    .add-user-form { margin-bottom: 2rem; padding: 1rem; border: 1px solid #ddd; border-radius: 4px; }
+    .users-list { margin-top: 2rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+    .btn { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-danger { background-color: #dc3545; color: white; }
+    .success { color: green; }
+    .error { color: red; }
+</style>
+
+</body>
+</html>

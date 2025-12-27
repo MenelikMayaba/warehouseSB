@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Stock Management</title>
+    <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+<h1>Optimized Stock</h1>
+
+<table>
+    <tr>
+        <th>SKU</th>
+        <th>Quantity</th>
+        <th>Current Location</th>
+        <th>Action</th>
+    </tr>
+    <tr th:each="item : ${items}">
+        <td th:text="${item.sku}"></td>
+        <td th:text="${item.quantity}"></td>
+        <td th:text="${item.location != null ? item.location.name : 'Unassigned'}"></td>
+        <td>
+            <form th:action="@{/stock/putaway/{id}/{locationId}(id=${item.id},locationId=1)}" method="post">
+                <button type="submit">Put Away</button>
+            </form>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

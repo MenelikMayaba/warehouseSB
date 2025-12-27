@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Packing & Checking</title>
+    <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+<h1>Packing Tasks</h1>
+
+<table>
+    <tr>
+        <th>SKU</th>
+        <th>Quantity</th>
+        <th>Action</th>
+    </tr>
+    <tr th:each="item : ${items}">
+        <td th:text="${item.sku}"></td>
+        <td th:text="${item.quantity}"></td>
+        <td>
+            <form th:action="@{/packing/check/{id}/{expectedQty}(id=${item.id},expectedQty=5)}" method="post">
+                <button type="submit">Check Quality</button>
+            </form>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

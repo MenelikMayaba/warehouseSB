@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dispatch Orders</title>
+    <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+<h1>Dispatch Orders</h1>
+
+<table>
+    <tr>
+        <th>Order ID</th>
+        <th>Workflow Status</th>
+        <th>Action</th>
+    </tr>
+    <tr th:each="order : ${orders}">
+        <td th:text="${order.id}"></td>
+        <td th:text="${order.workflowStatus}"></td>
+        <td>
+            <form th:action="@{/dispatch/send/{id}(id=${order.id})}" method="post">
+                <button type="submit">Dispatch</button>
+            </form>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>
