@@ -1,4 +1,4 @@
-package com.aCompany.wms.entity;
+package com.aCompany.wms.User;
 
 import com.aCompany.wms.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,26 +23,33 @@ public class UserDataLoader implements CommandLineRunner {
             User admin = new User();
             admin.setUsername("admin");
             admin.setPassword(passwordEncoder.encode("admin123"));
-            admin.setRoles(Set.of("ADMIN","PICKER","PACKER","DISPATCHER"));
+            admin.setRoles(Set.of(Role.ADMIN, Role.PICKER, Role.PACKER, Role.DISPATCHER, Role.RECEIVER));
             userRepository.save(admin);
 
             User picker = new User();
             picker.setUsername("picker");
             picker.setPassword(passwordEncoder.encode("picker123"));
-            picker.setRoles(Set.of("PICKER"));
+            picker.setRoles(Set.of(Role.PICKER));
             userRepository.save(picker);
 
             User packer = new User();
             packer.setUsername("packer");
             packer.setPassword(passwordEncoder.encode("packer123"));
-            packer.setRoles(Set.of("PACKER"));
+            packer.setRoles(Set.of(Role.PACKER));
             userRepository.save(packer);
 
             User dispatcher = new User();
             dispatcher.setUsername("dispatcher");
             dispatcher.setPassword(passwordEncoder.encode("dispatcher123"));
-            dispatcher.setRoles(Set.of("DISPATCHER"));
+            dispatcher.setRoles(Set.of(Role.DISPATCHER));
             userRepository.save(dispatcher);
+
+            User receiver = new User();
+            receiver.setUsername("receiver");
+            receiver.setPassword(passwordEncoder.encode("receive123"));
+            receiver.setRoles(Set.of(Role.RECEIVER));
+            userRepository.save(receiver);
+
         }
     }
 }

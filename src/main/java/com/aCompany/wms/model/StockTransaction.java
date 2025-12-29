@@ -69,4 +69,11 @@ public class StockTransaction {
     public void setItem(Item item) {
         this.item = item;
     }
+
+    public void setReferenceNumber(String reference) {
+        
+    }
+
+    public void setNotes(String notes) {
+    }
 }

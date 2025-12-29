@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Receiving</title>
+    <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+
+<h1>Receive Stock</h1>
+
+<form method="post" action="/receiving/scan">
+    <label>SKU</label>
+    <input type="text" name="sku" required/>
+
+    <label>Quantity</label>
+    <input type="number" name="quantity" required/>
+
+    <label>Location</label>
+    <select name="locationId">
+        <option th:each="loc : ${locations}"
+                th:value="${loc.id}"
+                th:text="${loc.name}">
+        </option>
+    </select>
+
+    <button type="submit">Receive</button>
+</form>
+
+</body>
+</html>

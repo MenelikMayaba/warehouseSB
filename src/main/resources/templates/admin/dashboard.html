@@ -11,7 +11,10 @@
         <div class="container">
             <a class="navbar-brand" href="/">Warehouse SB</a>
             <div class="navbar-nav ms-auto">
+                <a class="nav-link" th:href="@{/admin/users}">Users</a>
                 <span class="nav-item nav-link">Welcome, <span th:text="${username}"></span></span>
+                <a class="nav-link" th:href="@{/admin/AdminSettings}">Settings</a>
+
                 <a class="nav-link" th:href="@{/logout}">Logout</a>
             </div>
         </div>
@@ -32,7 +35,7 @@
                                         <h5 class="card-title">Quick Actions</h5>
                                         <div class="list-group">
                                             <a href="/admin/users" class="list-group-item list-group-item-action">Manage Users</a>
-                                            <a href="#" class="list-group-item list-group-item-action">View Inventory</a>
+                                            <a href="admin/stockView" class="list-group-item list-group-item-action">View Inventory</a>
                                             <a href="#" class="list-group-item list-group-item-action">Process Orders</a>
                                         </div>
                                     </div>
