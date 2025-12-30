@@ -23,5 +23,17 @@ public class Invoice {
     public void setPicked(boolean b) {
         this.picked = b;
     }
+
+    public void setId(long l) {
+        this.id = l;
+    }
+
+    public boolean isPicked() {
+        return picked;
+    }
+
+    public void setStatus(String priority) {
+        this.status = priority;
+    }
 }
 

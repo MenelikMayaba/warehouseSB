@@ -1,4 +1,4 @@
-package com.aCompany.wms.exeptions;
+package com.aCompany.wms.exceptions;
 
 public class ProductNotFoundException extends Exception {
     public ProductNotFoundException(String productNotFound) {

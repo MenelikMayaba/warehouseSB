@@ -1,11 +1,11 @@
 package com.aCompany.wms.service;
 
+import com.aCompany.wms.exceptions.InvoiceNotFoundException;
 import com.aCompany.wms.model.Invoice;
 import com.aCompany.wms.model.StockTransaction;
 import com.aCompany.wms.repository.InvoiceRepository;
 import com.aCompany.wms.repository.StockTransactionRepository;
 import com.aCompany.wms.util.SecurityUtil;
-import org.springframework.beans.PropertyValues;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +17,7 @@ public class PickingService {
 
     @Autowired
     private InvoiceRepository invoiceRepository;
+
 
     @Autowired
     private StockTransactionRepository transactionRepo;
@@ -41,5 +42,11 @@ public class PickingService {
     }
 
 
+    public void pickInvoiceById(Long invoiceId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new InvoiceNotFoundException(invoiceId));
+
+        pickInvoice(invoice);
+    }
 }
 

@@ -1,7 +1,7 @@
 //package com.aCompany.warehouseSB.invoice;
 //
 //import com.aCompany.warehouseSB.inventory.Item;
-//import com.aCompany.wms.model.Invoice;
+//import model.wms.com.aCompany.wms.Invoice;
 //import org.junit.jupiter.api.BeforeEach;
 //import org.junit.jupiter.api.DisplayName;
 //import org.junit.jupiter.api.Nested;

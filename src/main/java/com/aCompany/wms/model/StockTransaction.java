@@ -31,7 +31,7 @@ public class StockTransaction {
     private StockLocation location;
     
     public enum TransactionType {
-        RECEIVED, PICKED, ADJUSTED, REMOVED, PUTAWAY, MOVED, SCANNED, DISPATCHED, RETURNED,PACK_RECOVERY
+        RECEIVED, PICKED, ADJUSTED, REMOVED, PUTAWAY, MOVED, SCANNED, DISPATCHED, RETURNED, PICK, PACK_RECOVERY
     }
 
     public TransactionType getType() {

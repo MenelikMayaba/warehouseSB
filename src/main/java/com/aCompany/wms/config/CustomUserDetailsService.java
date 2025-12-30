@@ -2,7 +2,6 @@ package com.aCompany.wms.config;
 
 import com.aCompany.wms.User.User;
 import com.aCompany.wms.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

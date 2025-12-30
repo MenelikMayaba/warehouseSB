@@ -1,6 +1,5 @@
 package com.aCompany.wms.config;
 
-import com.aCompany.wms.model.Product;
 import com.aCompany.wms.model.Stock;
 import com.aCompany.wms.service.StockService;
 import org.springframework.beans.factory.annotation.Autowired;

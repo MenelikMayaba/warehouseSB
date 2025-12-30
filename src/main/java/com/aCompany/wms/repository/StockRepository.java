@@ -2,7 +2,6 @@ package com.aCompany.wms.repository;
 
 import com.aCompany.wms.model.Product;
 import com.aCompany.wms.model.Stock;
-import com.aCompany.wms.model.StockTransaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

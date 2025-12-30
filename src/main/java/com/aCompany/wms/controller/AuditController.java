@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-import java.util.List;
-
 @Controller
 @RequestMapping("/audit")
 @PreAuthorize("hasRole('ADMIN')")

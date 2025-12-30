@@ -1,9 +1,9 @@
 package com.aCompany.wms.controller;
 
 import com.aCompany.wms.dto.ApiResponse;
-import com.aCompany.wms.exeptions.LocationNotFoundException;
-import com.aCompany.wms.exeptions.ProductNotFoundException;
-import com.aCompany.wms.exeptions.StockNotFoundException;
+import com.aCompany.wms.exceptions.LocationNotFoundException;
+import com.aCompany.wms.exceptions.ProductNotFoundException;
+import com.aCompany.wms.exceptions.StockNotFoundException;
 import com.aCompany.wms.model.Product;
 import com.aCompany.wms.model.Stock;
 import com.aCompany.wms.model.StockLocation;
@@ -17,7 +17,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;

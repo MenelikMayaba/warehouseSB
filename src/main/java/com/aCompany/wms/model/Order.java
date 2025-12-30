@@ -5,7 +5,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;  // Add this import
-import org.springframework.beans.MutablePropertyValues;
 
 import java.time.LocalDateTime;
 import java.util.List;

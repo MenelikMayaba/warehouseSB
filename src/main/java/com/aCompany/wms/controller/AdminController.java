@@ -12,7 +12,6 @@ import com.aCompany.wms.repository.UserRepository;
 import com.aCompany.wms.service.LoggingService;
 import com.aCompany.wms.service.StockService;
 import jakarta.validation.Valid;
-import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

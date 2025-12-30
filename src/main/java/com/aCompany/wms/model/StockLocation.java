@@ -1,7 +1,6 @@
 package com.aCompany.wms.model;
 
 import jakarta.persistence.*;
-import java.util.Objects;
 
 @Entity
 @Table(name = "stock_locations")

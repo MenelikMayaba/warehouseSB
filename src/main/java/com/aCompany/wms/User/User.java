@@ -1,6 +1,5 @@
 package com.aCompany.wms.User;
 
-import com.aCompany.wms.User.Role;
 import jakarta.persistence.*;
 import java.util.Set;
 

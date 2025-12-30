@@ -2,7 +2,7 @@ package com.aCompany.wms.service;
 
 import com.aCompany.wms.dto.StockAdjustmentDto;
 import com.aCompany.wms.dto.StockReceiptDto;
-import com.aCompany.wms.exeptions.*;
+import com.aCompany.wms.exceptions.*;
 import com.aCompany.wms.model.Product;
 import com.aCompany.wms.model.Stock;
 import com.aCompany.wms.model.StockLocation;
