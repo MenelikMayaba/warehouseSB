@@ -27,7 +27,7 @@ public class PickingService {
         invoiceRepository.save(invoice);
 
         StockTransaction tx = new StockTransaction();
-        tx.setType("PICK");
+        tx.setType(StockTransaction.TransactionType.valueOf("PICK"));
         tx.setQuantity(1);
         tx.setTimestamp(LocalDateTime.now());
         tx.setPerformedBy(SecurityUtil.getCurrentUsername());

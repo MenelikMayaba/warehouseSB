@@ -1,32 +1,44 @@
 package com.aCompany.wms.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 public class StockTransaction {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String type; // PUTAWAY, PICK, PACK_FAIL, DISPATCH
+    @Enumerated(EnumType.STRING)
+    private TransactionType type; // RECEIVED, PICKED, ADJUSTED, REMOVED, PUTAWAY, etc.
+    
     private int quantity;
     private LocalDateTime timestamp;
+    private String referenceNumber;
+    private String notes;
+    private String action; // SCAN, MOVE, ADJUST, etc.
+    private String sourceLocation;
+    private String destinationLocation;
+    private String scannedBy; // Username of who performed the scan/move
+    private LocalDateTime scannedAt;
 
-    private String performedBy; // username
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id")
+    private StockLocation location;
+    
+    public enum TransactionType {
+        RECEIVED, PICKED, ADJUSTED, REMOVED, PUTAWAY, MOVED, SCANNED, DISPATCHED, RETURNED,PACK_RECOVERY
+    }
 
-    @ManyToOne
-    private Item item;
-
-    public String getType() {
+    public TransactionType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(TransactionType type) {
         this.type = type;
     }
 
@@ -47,33 +59,91 @@ public class StockTransaction {
     }
 
     public String getPerformedBy() {
-        return performedBy;
+        return scannedBy; // Alias for backward compatibility
     }
-
+    
     public void setPerformedBy(String performedBy) {
-        this.performedBy = performedBy;
+        this.scannedBy = performedBy;
     }
-
+    
+    public String getScannedBy() {
+        return scannedBy;
+    }
+    
+    public void setScannedBy(String scannedBy) {
+        this.scannedBy = scannedBy;
+    }
+    
     public LocalDateTime getTimestamp() {
         return timestamp;
     }
-
+    
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
-
-    public Item getItem() {
-        return item;
+    
+    public String getReferenceNumber() {
+        return referenceNumber;
     }
-
-    public void setItem(Item item) {
-        this.item = item;
+    
+    public void setReferenceNumber(String referenceNumber) {
+        this.referenceNumber = referenceNumber;
     }
-
-    public void setReferenceNumber(String reference) {
-        
+    
+    public String getNotes() {
+        return notes;
     }
-
+    
     public void setNotes(String notes) {
+        this.notes = notes;
     }
+    
+    public String getAction() {
+        return action;
+    }
+    
+    public void setAction(String action) {
+        this.action = action;
+    }
+    
+    public String getSourceLocation() {
+        return sourceLocation;
+    }
+    
+    public void setSourceLocation(String sourceLocation) {
+        this.sourceLocation = sourceLocation;
+    }
+    
+    public String getDestinationLocation() {
+        return destinationLocation;
+    }
+    
+    public void setDestinationLocation(String destinationLocation) {
+        this.destinationLocation = destinationLocation;
+    }
+    
+    public LocalDateTime getScannedAt() {
+        return scannedAt;
+    }
+    
+    public void setScannedAt(LocalDateTime scannedAt) {
+        this.scannedAt = scannedAt;
+    }
+    
+    public Product getProduct() {
+        return product;
+    }
+    
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+    
+    public StockLocation getLocation() {
+        return location;
+    }
+    
+    public void setLocation(StockLocation location) {
+        this.location = location;
+    }
+
 }

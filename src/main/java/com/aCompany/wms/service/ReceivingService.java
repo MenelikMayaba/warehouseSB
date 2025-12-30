@@ -1,9 +1,11 @@
 package com.aCompany.wms.service;
 
 import com.aCompany.wms.entity.ReceivingRecord;
-import com.aCompany.wms.model.Item;
+import com.aCompany.wms.model.Product;
+import com.aCompany.wms.model.Stock;
 import com.aCompany.wms.model.StockLocation;
 import com.aCompany.wms.model.StockTransaction;
+import com.aCompany.wms.repository.ProductRepository;
 import com.aCompany.wms.repository.ReceivingRepository;
 import com.aCompany.wms.repository.StockRepository;
 import com.aCompany.wms.repository.StockTransactionRepository;
@@ -20,6 +22,9 @@ public class ReceivingService {
     private StockRepository stockRepository;
 
     @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
     private ReceivingRepository receivingRepository;
 
     @Autowired
@@ -27,21 +32,21 @@ public class ReceivingService {
 
     public void receiveStock(String sku, int quantity, StockLocation location) {
 
-        Item item = stockRepository.findAll()
+        Stock stock = stockRepository.findAll()
                 .stream()
                 .filter(i -> i.getSku().equals(sku))
                 .findFirst()
                 .orElseGet(() -> {
-                    Item newItem = new Item();
-                    newItem.setSku(sku);
-                    newItem.setQuantity(0);
-                    newItem.setLocation(location);
-                    return newItem;
+                    Stock newStock = new Stock();
+                    newStock.setSku(sku);
+                    newStock.setQuantity(0);
+                    newStock.setLocation(location);
+                    return newStock;
                 });
 
-        item.setQuantity(item.getQuantity() + quantity);
-        item.setLocation(location);
-        stockRepository.save(item);
+        stock.setQuantity(stock.getQuantity() + quantity);
+        stock.setLocation(location);
+        stockRepository.save(stock);
 
         ReceivingRecord record = new ReceivingRecord();
         record.setSku(sku);
@@ -53,10 +58,14 @@ public class ReceivingService {
 
         receivingRepository.save(record);
 
+        // Retrieve the product by SKU
+        Product product = productRepository.findBySku(sku)
+            .orElseThrow(() -> new RuntimeException("Product not found with SKU: " + sku));
+            
         StockTransaction tx = new StockTransaction();
-        tx.setType("RECEIVE");
+        tx.setType(StockTransaction.TransactionType.RECEIVED);
         tx.setQuantity(quantity);
-        tx.setItem(item);
+        tx.setProduct(product);
         tx.setTimestamp(LocalDateTime.now());
         tx.setPerformedBy(SecurityUtil.getCurrentUsername());
 

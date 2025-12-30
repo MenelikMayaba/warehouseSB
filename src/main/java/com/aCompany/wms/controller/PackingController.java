@@ -1,7 +1,8 @@
 package com.aCompany.wms.controller;
 
+import com.aCompany.wms.model.Product;
+import com.aCompany.wms.repository.ProductRepository;
 import org.springframework.ui.Model;
-import com.aCompany.wms.model.Item;
 import com.aCompany.wms.repository.StockRepository;
 import com.aCompany.wms.service.PackingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class PackingController {
     @Autowired
     private StockRepository stockRepository;
 
+    @Autowired
+    private ProductRepository productRepository;
+
     @GetMapping
     public String viewPackingPage(Model model) {
         model.addAttribute("items", stockRepository.findAll());
@@ -30,7 +34,7 @@ public class PackingController {
 
     @PostMapping("/check/{id}/{expectedQty}")
     public String qualityCheck(@PathVariable Long id, @PathVariable int expectedQty) {
-        Item item = stockRepository.findById(id).orElseThrow();
+        Product item = stockRepository.findById(id).orElseThrow().getProduct();
         boolean ok = packingService.qualityCheck(item, expectedQty);
         if (!ok) {
             packingService.recoverFailedPack(item);
@@ -40,20 +44,20 @@ public class PackingController {
 
 
     // Checks if quantity is sufficient
-    public boolean qualityCheck(Item item, int expectedQty) {
-        if(item.getQuantity() >= expectedQty) {
+    public boolean qualityCheck(Product product, int expectedQty) {
+        if(product.getQuantity() >= expectedQty) {
             return true;
         } else {
-            System.out.println("Quality check failed for SKU: " + item.getSku());
+            System.out.println("Quality check failed for SKU: " + product.getSku());
             return false;
         }
     }
 
     // Recovery: increment quantity or log issue
-    public void recoverFailedPack(Item item) {
-        item.setQuantity(item.getQuantity() + 1);
-        stockRepository.save(item);
-        System.out.println("Recovered failed pack for SKU: " + item.getSku());
+    public void recoverFailedPack(Product product) {
+        product.setQuantity(product.getQuantity() + 1);
+        productRepository.save(product);
+        System.out.println("Recovered failed pack for SKU: " + product.getSku());
     }
 }
 

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>Stock Management</title>
@@ -7,19 +8,67 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 <body>
-    <div th:replace="fragments/header :: header"></div>
+    <div th:replace="~{fragments/header :: header}"></div>
     
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Stock Overview</h2>
+            <h2>Stock Management</h2>
             <a th:href="@{/admin}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Back to Admin
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
             </a>
         </div>
         
+        <!-- Add New Stock Form -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
-                <i class="bi bi-box-seam"></i> Current Stock Levels
+                <i class="bi bi-plus-circle"></i> Add New Stock
+            </div>
+            <div class="card-body">
+                <form th:action="@{/admin/stock/add}" method="post" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="productId" class="form-label">Product</label>
+                        <select class="form-select" id="productId" name="productId" required>
+                            <option value="" selected disabled>Select Product</option>
+                            <option th:each="product : ${products}" 
+                                    th:value="${product.id}" 
+                                    th:text="${product.name + ' (' + product.sku + ')'}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="locationId" class="form-label">Location</label>
+                        <select class="form-select" id="locationId" name="locationId" required>
+                            <option value="" selected disabled>Select Location</option>
+                            <option th:each="location : ${locations}" 
+                                    th:value="${location.id}" 
+                                    th:text="${location.name}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="batchNumber" class="form-label">Batch Number (Optional)</label>
+                        <input type="text" class="form-control" id="batchNumber" name="batchNumber">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add Stock
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Stock List -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-box-seam me-2"></i> Current Stock Levels</span>
+                <span class="badge bg-light text-dark">
+                    <span th:text="${allStock != null ? allStock.size() : 0}">0</span> items
+                </span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -32,18 +81,22 @@
                                 <th>Quantity</th>
                                 <th>Location</th>
                                 <th>Batch</th>
-                                <th>Status</th>
                                 <th>Last Updated</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="item : ${allStock}" th:class="${item.quantity == 0} ? 'table-danger' : (${item.quantity < 10} ? 'table-warning' : '')">
+                            <tr th:each="item : ${allStock}" 
+                                th:class="${item.quantity == 0} ? 'table-danger' : (${item.quantity < 10} ? 'table-warning' : '')">
                                 <td th:text="${item.id}"></td>
                                 <td>
                                     <span th:if="${item.product != null}" th:text="${item.product.name}"></span>
                                     <span th:if="${item.product == null}" class="text-muted">N/A</span>
                                 </td>
-                                <td th:text="${item.sku ?: 'N/A'}"></td>
+                                <td>
+                                    <span th:if="${item.product != null}" th:text="${item.product.sku}"></span>
+                                    <span th:if="${item.product == null}" class="text-muted">N/A</span>
+                                </td>
                                 <td>
                                     <span class="badge" 
                                           th:class="${item.quantity == 0} ? 'bg-danger' : (${item.quantity < 10} ? 'bg-warning' : 'bg-success')">
@@ -54,17 +107,19 @@
                                     <span th:if="${item.location != null}" th:text="${item.location.name}"></span>
                                     <span th:if="${item.location == null}" class="text-muted">N/A</span>
                                 </td>
-                                <td th:text="${item.batchNumber ?: 'N/A'}"></td>
-                                <td>
-                                    <span th:if="${item.status}" 
-                                          th:class="'badge ' + ${item.status == 'IN_STOCK'} ? 'bg-success' : 'bg-secondary'"
-                                          th:text="${item.status}">
-                                    </span>
-                                    <span th:unless="${item.status}" class="badge bg-secondary">UNKNOWN</span>
-                                </td>
+                                <td th:text="${item.batchNumber != null && !item.batchNumber.isEmpty()} ? ${item.batchNumber} : 'N/A'"></td>
                                 <td th:text="${#temporals.format(item.lastUpdated, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#adjustStockModal"
+                                            th:data-stock-id="${item.id}"
+                                            th:data-current-quantity="${item.quantity}">
+                                        <i class="bi bi-pencil"></i> Adjust
+                                    </button>
+                                </td>
                             </tr>
-                            <tr th:if="${allStock.isEmpty()}">
+                            <tr th:if="${allStock == null || allStock.empty}">
                                 <td colspan="8" class="text-center text-muted py-4">
                                     <i class="bi bi-inbox"></i> No stock items found
                                 </td>
@@ -73,12 +128,56 @@
                     </table>
                 </div>
             </div>
-            <div class="card-footer text-muted">
-                <small>Total items: <span th:text="${allStock.size()}">0</span></small>
+        </div>
+    </div>
+
+    <!-- Adjust Stock Modal -->
+    <div class="modal fade" id="adjustStockModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adjust Stock Quantity</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="adjustStockForm" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" id="stockId" name="id">
+                        <div class="mb-3">
+                            <label for="adjustQuantity" class="form-label">New Quantity</label>
+                            <input type="number" class="form-control" id="adjustQuantity" name="quantity" min="0" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const adjustStockModal = document.getElementById('adjustStockModal');
+            if (adjustStockModal) {
+                adjustStockModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const stockId = button.getAttribute('data-stock-id');
+                    const currentQuantity = button.getAttribute('data-current-quantity');
+                    
+                    const modalForm = document.getElementById('adjustStockForm');
+                    const quantityInput = document.getElementById('adjustQuantity');
+                    const idInput = document.getElementById('stockId');
+                    
+                    modalForm.action = '/admin/stock/adjust/' + stockId;
+                    idInput.value = stockId;
+                    quantityInput.value = currentQuantity;
+                    quantityInput.focus();
+                });
+            }
+        });
+    </script>
 </body>
 </html>

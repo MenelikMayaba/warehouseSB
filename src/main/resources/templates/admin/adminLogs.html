@@ -1,259 +1,119 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Logs</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 </head>
 <body>
-    <div th:replace="~{fragments/header :: header}"></div>
-    
-    <div class="container-fluid mt-4">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Warehouse SB</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" th:href="@{/admin/dashboard}">Back to Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>System Logs</h2>
             <div>
-                <button class="btn btn-outline-secondary" onclick="refreshLogs()">
+                <a th:href="@{/admin/adminLogs}" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-clockwise"></i> Refresh
-                </button>
-                <button class="btn btn-outline-danger" onclick="clearLogs()">
+                </a>
+                <a th:href="@{/admin/adminLogs/clear}"
+                   class="btn btn-outline-danger"
+                   onclick="return confirm('Are you sure you want to clear all logs?');">
                     <i class="bi bi-trash"></i> Clear Logs
-                </button>
+                </a>
             </div>
         </div>
-        
-        <div class="card">
+
+        <!-- Filters -->
+        <div class="card mb-4">
             <div class="card-body">
+                <form th:action="@{/admin/adminLogs}" method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username"
+                               th:value="${param.username}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="action" class="form-label">Action</label>
+                        <input type="text" class="form-control" id="action" name="action"
+                               th:value="${param.action}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="level" class="form-label">Level</label>
+                        <select class="form-select" id="level" name="level">
+                            <option value="">All Levels</option>
+                            <option value="INFO" th:selected="${param.level == 'INFO'}">INFO</option>
+                            <option value="WARN" th:selected="${param.level == 'WARN'}">WARN</option>
+                            <option value="ERROR" th:selected="${param.level == 'ERROR'}">ERROR</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-funnel"></i> Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="card">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table id="logsTable" class="table table-striped" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>Timestamp</th>
-                                <th>Level</th>
-                                <th>User</th>
-                                <th>Action</th>
-                                <th>Details</th>
-                                <th>IP Address</th>
-                            </tr>
+                    <table class="table table-striped mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Level</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>IP Address</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            <!-- Sample log entry -->
-                            <tr>
-                                <td>2025-04-15 14:30:22</td>
-                                <td><span class="badge bg-info">INFO</span></td>
-                                <td>admin@example.com</td>
-                                <td>User Login</td>
-                                <td>Successful login from 192.168.1.1</td>
-                                <td>192.168.1.1</td>
-                            </tr>
-                            <!-- More log entries would be dynamically loaded -->
+                        <tr th:each="log : ${logs}">
+                            <td th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                            <td>
+                                        <span th:class="'badge ' +
+                                            ${log.level == 'ERROR' ? 'bg-danger' :
+                                             log.level == 'WARN' ? 'bg-warning' : 'bg-info'}"
+                                              th:text="${log.level}">
+                                        </span>
+                            </td>
+                            <td th:text="${log.username}"></td>
+                            <td th:text="${log.action}"></td>
+                            <td th:text="${log.details}"></td>
+                            <td th:text="${log.ipAddress}"></td>
+                        </tr>
+                        <tr th:if="${logs.empty}">
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox"></i> No log entries found
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-        
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Log Filters</h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="logFilterForm">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Level</label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="" id="infoCheck" checked>
-                                        <label class="form-check-label" for="infoCheck">
-                                            INFO
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="" id="warningCheck" checked>
-                                        <label class="form-check-label" for="warningCheck">
-                                            WARNING
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="" id="errorCheck" checked>
-                                        <label class="form-check-label" for="errorCheck">
-                                            ERROR
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="userFilter" class="form-label">User</label>
-                                        <input type="text" class="form-control" id="userFilter" placeholder="Filter by username">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="dateRange" class="form-label">Date Range</label>
-                                        <select class="form-select" id="dateRange">
-                                            <option value="today">Today</option>
-                                            <option value="yesterday">Yesterday</option>
-                                            <option value="week" selected>Last 7 days</option>
-                                            <option value="month">Last 30 days</option>
-                                            <option value="all">All Time</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary mt-3">Apply Filters</button>
-                            <button type="reset" class="btn btn-outline-secondary mt-3 ms-2">Reset</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Log Statistics</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-4">
-                                <div class="display-6 text-primary" id="infoCount">1,234</div>
-                                <div class="text-muted">INFO</div>
-                            </div>
-                            <div class="col-4">
-                                <div class="display-6 text-warning" id="warningCount">42</div>
-                                <div class="text-muted">WARNINGS</div>
-                            </div>
-                            <div class="col-4">
-                                <div class="display-6 text-danger" id="errorCount">5</div>
-                                <div class="text-muted">ERRORS</div>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <h6>Log Distribution (Last 7 days)</h6>
-                            <div id="logChart" style="height: 200px;">
-                                <!-- Chart will be rendered here -->
-                                <div class="text-center text-muted py-5">
-                                    <i class="bi bi-bar-chart" style="font-size: 3rem;"></i>
-                                    <p class="mt-2">Log distribution chart will be displayed here</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
+        <!-- Simple counter -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-muted small">
+                Showing <span th:text="${logs.size()}">0</span> entries
             </div>
         </div>
     </div>
 
-    <!-- Log Details Modal -->
-    <div class="modal fade" id="logDetailsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Log Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <h6>Timestamp</h6>
-                        <p id="logTimestamp">2025-04-15 14:30:22.123</p>
-                    </div>
-                    <div class="mb-3">
-                        <h6>Level</h6>
-                        <p><span class="badge bg-info">INFO</span></p>
-                    </div>
-                    <div class="mb-3">
-                        <h6>User</h6>
-                        <p>admin@example.com</p>
-                    </div>
-                    <div class="mb-3">
-                        <h6>Action</h6>
-                        <p>User Login</p>
-                    </div>
-                    <div class="mb-3">
-                        <h6>IP Address</h6>
-                        <p>192.168.1.1</p>
-                    </div>
-                    <div class="mb-3">
-                        <h6>Details</h6>
-                        <pre class="bg-light p-3 rounded">
-                            {
-                              "status": "success",
-                              "message": "User authenticated successfully",
-                              "sessionId": "abc123xyz",
-                              "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36..."
-                            }
-                        </pre>
-                    </div>
-                    <div class="mb-3">
-                        <h6>Stack Trace</h6>
-                        <pre class="bg-light p-3 rounded" style="max-height: 200px; overflow-y: auto;">
-                            <!-- Stack trace would go here for errors -->
-                            No stack trace available for this log entry.
-                        </pre>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="copyLogDetails()">
-                        <i class="bi bi-clipboard"></i> Copy Details
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-    
-    <script>
-        // Initialize DataTable
-        $(document).ready(function() {
-            $('#logsTable').DataTable({
-                order: [[0, 'desc']], // Sort by timestamp descending
-                pageLength: 25,
-                responsive: true
-            });
-            
-            // Add click handler for log rows
-            $('#logsTable tbody').on('click', 'tr', function() {
-                const modal = new bootstrap.Modal(document.getElementById('logDetailsModal'));
-                // In a real app, you would fetch the full log details here
-                modal.show();
-            });
-            
-            // Form submission
-            $('#logFilterForm').on('submit', function(e) {
-                e.preventDefault();
-                // Apply filters here
-                console.log('Filters applied');
-            });
-        });
-        
-        function refreshLogs() {
-            // Implement log refresh logic
-            console.log('Refreshing logs...');
-            // In a real app, this would make an AJAX call to get the latest logs
-            const table = $('#logsTable').DataTable();
-            table.ajax.reload();
-        }
-        
-        function clearLogs() {
-            if (confirm('Are you sure you want to clear all logs? This action cannot be undone.')) {
-                // Implement log clearing logic
-                console.log('Clearing logs...');
-                // In a real app, this would make an AJAX call to clear logs
-                alert('Logs have been cleared');
-                refreshLogs();
-            }
-        }
-        
-        function copyLogDetails() {
-            // Implement copy to clipboard functionality
-            const logDetails = document.querySelector('#logDetailsModal pre').innerText;
-            navigator.clipboard.writeText(logDetails).then(() => {
-                alert('Log details copied to clipboard');
-            });
-        }
-    </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

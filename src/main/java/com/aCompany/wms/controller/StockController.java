@@ -1,42 +1,118 @@
 package com.aCompany.wms.controller;
 
-import com.aCompany.wms.repository.StockRepository;
-import org.springframework.ui.Model;  // Add this line
-import com.aCompany.wms.model.Item;
+import com.aCompany.wms.dto.ApiResponse;
+import com.aCompany.wms.exeptions.LocationNotFoundException;
+import com.aCompany.wms.exeptions.ProductNotFoundException;
+import com.aCompany.wms.exeptions.StockNotFoundException;
+import com.aCompany.wms.model.Product;
+import com.aCompany.wms.model.Stock;
 import com.aCompany.wms.model.StockLocation;
+import com.aCompany.wms.repository.ProductRepository;
 import com.aCompany.wms.repository.StockLocationRepository;
+import com.aCompany.wms.repository.StockRepository;
 import com.aCompany.wms.service.StockService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Controller
-@RequestMapping("/stock")
+@RequestMapping("/admin/stock")
 public class StockController {
 
+    private final StockService stockService;
+    private final StockRepository stockRepository;
+    private final ProductRepository productRepository;
+    private final StockLocationRepository locationRepository;
+
     @Autowired
-    private StockService stockService;
+    public StockController(StockService stockService, 
+                         StockRepository stockRepository,
+                         ProductRepository productRepository,
+                         StockLocationRepository locationRepository) {
+        this.stockService = stockService;
+        this.stockRepository = stockRepository;
+        this.productRepository = productRepository;
+        this.locationRepository = locationRepository;
+    }
 
-    @GetMapping
+    @GetMapping("/stockView")
+    @PreAuthorize("hasRole('ADMIN')")
     public String viewStockPage(Model model) {
-        List<Item> optimizedItems = stockService.getOptimizedStorage("HIGH_DEMAND");
-        model.addAttribute("items", optimizedItems);
-        return "stock";
+        List<Stock> allStock = stockRepository.findAll();
+        model.addAttribute("items", allStock);
+        model.addAttribute("allStock", allStock);
+        model.addAttribute("products", productRepository.findAll());
+        model.addAttribute("locations", locationRepository.findAll());
+        return "/admin/stockView";  // This should resolve to src/main/resources/templates/admin/stockView.html
     }
 
-    @PostMapping("/putaway/{id}/{locationId}")
-    public String putAwayItem(@PathVariable Long id, @PathVariable Long locationId, 
-                            @Autowired StockRepository stockRepo, 
-                            @Autowired StockLocationRepository locationRepo) {
-        Item item = stockRepo.findById(id).orElseThrow();
-        StockLocation location = locationRepo.findById(locationId).orElseThrow();
-        stockService.putAway(item, location);
-        return "redirect:/stock";
+    @PostMapping("/add")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String addStock(@RequestParam Long productId,
+                          @RequestParam Long locationId,
+                          @RequestParam int quantity,
+                          @RequestParam(required = false) String batchNumber) {
+        Product product = productRepository.findById(productId)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid product ID: " + productId));
+            
+        StockLocation location = locationRepository.findById(locationId)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid location ID: " + locationId));
+            
+        Stock stock = new Stock(product, location, quantity, batchNumber, null, null);
+        stockRepository.save(stock);
+        
+        return "redirect:/admin/stock";
     }
+
+    @PostMapping("remove")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String removeStock(@RequestParam Long productId,
+                              @RequestParam Long locationId,
+                              @RequestParam int quantity,
+                              @RequestParam(required = false) String batchNumber) {
+        try {
+            stockService.removeStock(productId, locationId, quantity, batchNumber);
+            return "redirect:/admin/stock?success=Stock+removed+successfully";
+        } catch (ProductNotFoundException e) {
+            return "redirect:/admin/stock?error=" + URLEncoder.encode("Product not found: " + e.getMessage(), StandardCharsets.UTF_8);
+        } catch (LocationNotFoundException e) {
+            return "redirect:/admin/stock?error=" + URLEncoder.encode("Location not found: " + e.getMessage(), StandardCharsets.UTF_8);
+        } catch (StockNotFoundException e) {
+            return "redirect:/admin/stock?error=" + URLEncoder.encode("Stock not found: " + e.getMessage(), StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/admin/stock?error=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+        }
+    }
+
+
+
+    @PostMapping("/adjust/{id}")
+    public String adjustStock(@PathVariable Long id,
+                            @RequestParam int quantity) {
+        Stock stock = stockRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid stock ID: " + id));
+            
+        stock.setQuantity(quantity);
+        stockRepository.save(stock);
+        
+        return "redirect:/admin/stock";
+    }
+
+    @GetMapping("/api/list")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<Product>>> getAllStockApi() {
+        List<Product> allStock = stockService.getAllStock();
+        return ResponseEntity.ok(ApiResponse.success(allStock));
+    }
+
+
 }
 

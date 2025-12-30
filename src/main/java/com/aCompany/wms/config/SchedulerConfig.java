@@ -1,6 +1,7 @@
 package com.aCompany.wms.config;
 
-import com.aCompany.wms.model.Item;
+import com.aCompany.wms.model.Product;
+import com.aCompany.wms.model.Stock;
 import com.aCompany.wms.service.StockService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -17,8 +18,8 @@ public class SchedulerConfig {
 
     @Scheduled(cron = "0 0 * * * *") // every hour
     public void checkStockLevels() {
-        List<Item> lowStock = stockService.getLowStockItems();
-        lowStock.forEach(item -> System.out.println("Reorder: " + item.getSku()));
+        List<Stock> lowStock = stockService.getLowStockItems();
+        lowStock.forEach(item -> System.out.println("Reorder: " + item.getProduct().getSku()));
     }
 }
 

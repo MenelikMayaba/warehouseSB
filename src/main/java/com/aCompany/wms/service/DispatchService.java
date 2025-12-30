@@ -22,7 +22,7 @@ public class DispatchService {
         jmsTemplate.convertAndSend("dispatchQueue", order.getId());
 
         StockTransaction tx = new StockTransaction();
-        tx.setType("DISPATCH");
+        tx.setType(StockTransaction.TransactionType.valueOf("DISPATCH"));
         tx.setQuantity(order.getInvoices().size());
         tx.setTimestamp(LocalDateTime.now());
         tx.setPerformedBy(SecurityUtil.getCurrentUsername());

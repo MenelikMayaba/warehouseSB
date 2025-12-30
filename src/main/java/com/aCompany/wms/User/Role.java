@@ -31,15 +31,29 @@ public enum Role {
     }
 
     @Converter(autoApply = true)
-    public static class RoleConverter implements AttributeConverter<Role, Integer> {
+    public static class RoleConverter implements AttributeConverter<Role, String> {
         @Override
-        public Integer convertToDatabaseColumn(Role role) {
-            return role != null ? role.getValue() : null;
+        public String convertToDatabaseColumn(Role role) {
+            return role != null ? role.name() : null;
         }
 
         @Override
-        public Role convertToEntityAttribute(Integer dbData) {
-            return dbData != null ? Role.fromValue(dbData) : null;
+        public Role convertToEntityAttribute(String dbData) {
+            if (dbData == null) {
+                return null;
+            }
+            try {
+                // First try to parse as enum name (for new data)
+                return Role.valueOf(dbData);
+            } catch (IllegalArgumentException e) {
+                try {
+                    // If that fails, try to parse as integer (for existing data)
+                    int value = Integer.parseInt(dbData);
+                    return Role.fromValue(value);
+                } catch (NumberFormatException ex) {
+                    throw new IllegalArgumentException("Unknown role value: " + dbData, ex);
+                }
+            }
         }
     }
 }
