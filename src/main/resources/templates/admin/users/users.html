@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Management - Warehouse Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .badge {
+            font-size: 0.75em;
+            vertical-align: middle;
+        }
+        .table th {
+            white-space: nowrap;
+        }
+        .table td {
+            vertical-align: middle;
+        }
+    </style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -17,6 +29,47 @@
         </div>
     </div>
 </nav>
+
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-users me-1"></i>
+        Active User Sessions
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="activeUsersTable" width="100%" cellspacing="0">
+                <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Login Time</th>
+                    <th>Last Activity</th>
+                    <th>IP Address</th>
+                    <th>Device</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="activeUser : ${activeUsers}"
+                    th:class="${#strings.equals(currentUser, activeUser.username)} ? 'table-primary'">
+                    <td th:text="${activeUser.username}"></td>
+                    <td th:text="${#temporals.format(activeUser.loginTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                    <td th:text="${#temporals.format(activeUser.lastActivity, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                    <td th:text="${activeUser.ipAddress}"></td>
+                    <td th:with="userAgent=${activeUser.userAgent}">
+                            <span th:if="${#strings.length(userAgent) > 50}"
+                                  th:title="${userAgent}">
+                                <span th:text="${#strings.substring(userAgent, 0, 47)} + '...'"></span>
+                            </span>
+                        <span th:unless="${#strings.length(userAgent) > 50}"
+                              th:text="${userAgent}">
+                            </span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 <div class="container mt-5">
     <div class="row">
@@ -73,6 +126,53 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Add this script at the bottom of your users.html -->
+<script th:inline="javascript">
+    function updateActiveSessions() {
+        fetch('/api/sessions/active')
+            .then(response => response.json())
+            .then(sessions => {
+                const tbody = document.querySelector('#activeUsersTable tbody');
+                tbody.innerHTML = ''; // Clear current rows
+
+                sessions.forEach(session => {
+                    const row = document.createElement('tr');
+                    if (session.username === /*[[${#authentication.name}]]*/ '') {
+                        row.classList.add('table-primary');
+                    }
+
+                    // Format login time
+                    const loginTime = new Date(session.loginTime[0], session.loginTime[1]-1, session.loginTime[2],
+                                            session.loginTime[3], session.loginTime[4], session.loginTime[5]);
+                    const lastActivity = new Date(session.lastActivity[0], session.lastActivity[1]-1,
+                                               session.lastActivity[2], session.lastActivity[3],
+                                               session.lastActivity[4], session.lastActivity[5]);
+
+                    // Create and append cells
+                    row.innerHTML = `
+                        <td>${session.username} ${session.username === /*[[${#authentication.name}]]*/ '' ?
+                            '<span class="badge bg-primary ms-2">You</span>' : ''}</td>
+                        <td>${loginTime.toLocaleString()}</td>
+                        <td>${lastActivity.toLocaleString()}</td>
+                        <td>${session.ipAddress || 'N/A'}</td>
+                        <td title="${session.userAgent || ''}">
+                            ${session.userAgent ? (session.userAgent.length > 50 ?
+                                session.userAgent.substring(0, 47) + '...' : session.userAgent) : 'N/A'}
+                        </td>
+                    `;
+
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Error fetching active sessions:', error));
+    }
+
+    // Update sessions every 5 seconds
+    setInterval(updateActiveSessions, 5000);
+    // Initial load
+    document.addEventListener('DOMContentLoaded', updateActiveSessions);
+</script>
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
 </body>
 </html>

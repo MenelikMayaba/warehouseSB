@@ -117,16 +117,16 @@ Application available at [http://localhost:8080](http://localhost:8080)
 src/
 ├── main/
 │   ├── java/com/aCompany/wms/
-│   │   ├── config/
-│   │   ├── controller/
-│   │   ├── dto/
-│   │   ├── entity/
-│   │   ├── exceptions/
-│   │   ├── model/
-│   │   ├── repository/
-│   │   ├── service/
-│   │   ├── util/
-│   │   └── user/
+│   │   ├── config/ -application wiring and setup.
+│   │   ├── controller/ -HTTP layer only
+│   │   ├── dto/ -data shapes for communication
+│   │   ├── entity/ -database mapping
+│   │   ├── exceptions/ -error handling, cleanly.
+│   │   ├── model/ -core business concepts.
+│   │   ├── repository/ -data access layer.
+│   │   ├── service/ -business logic brain
+│   │   ├── util/ -stateless helpers
+│   │   └── user/ -This one is domain-specific, not framework magic
 │   └── resources/
 │       ├── static/
 │       ├── templates/

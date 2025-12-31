@@ -84,26 +84,110 @@
             document.getElementById('resetBtn').disabled = !this.checked;
         });
 
+        function showToast(type, message) {
+            const toastContainer = document.createElement('div');
+            toastContainer.className = `toast-container position-fixed bottom-0 end-0 p-3`;
+            toastContainer.style.zIndex = '11';
+            
+            const toast = document.createElement('div');
+            toast.className = `toast show`;
+            toast.role = 'alert';
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            const toastHeader = document.createElement('div');
+            toastHeader.className = `toast-header text-white bg-${type}`;
+            
+            const title = document.createElement('strong');
+            title.className = 'me-auto';
+            title.textContent = type === 'success' ? 'Success' : 'Error';
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.className = 'btn-close';
+            closeBtn.setAttribute('data-bs-dismiss', 'toast');
+            closeBtn.setAttribute('aria-label', 'Close');
+            
+            toastHeader.appendChild(title);
+            toastHeader.appendChild(closeBtn);
+            
+            const toastBody = document.createElement('div');
+            toastBody.className = 'toast-body';
+            toastBody.textContent = message;
+            
+            toast.appendChild(toastHeader);
+            toast.appendChild(toastBody);
+            toastContainer.appendChild(toast);
+            document.body.appendChild(toastContainer);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toastContainer.remove(), 150);
+            }, 5000);
+        }
+
         function showResetModal() {
             const modal = new bootstrap.Modal(document.getElementById('resetModal'));
             modal.show();
         }
 
-        function clearCache() {
-            // Implement cache clearing logic
-            alert('System cache cleared successfully');
+        async function clearCache() {
+            try {
+                const response = await fetch('/admin/clearCache', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                const result = await response.json();
+                showToast(response.ok ? 'success' : 'danger', result.message || result.error);
+            } catch (error) {
+                showToast('danger', 'Failed to clear cache: ' + error.message);
+            }
         }
 
-        function backupDatabase() {
-            // Implement backup logic
-            alert('Database backup initiated');
+        async function backupDatabase() {
+            try {
+                const response = await fetch('/admin/backupDatabase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                const result = await response.json();
+                showToast(response.ok ? 'success' : 'danger', result.message || result.error);
+            } catch (error) {
+                showToast('danger', 'Failed to create backup: ' + error.message);
+            }
         }
 
-        function resetSystem() {
-            // Implement system reset logic
-            alert('System reset initiated');
-            const modal = bootstrap.Modal.getInstance(document.getElementById('resetModal'));
-            modal.hide();
+        async function resetSystem() {
+            try {
+                const response = await fetch('/admin/resetSystem', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                const result = await response.json();
+                showToast(response.ok ? 'success' : 'danger', result.message || result.error);
+                
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('resetModal'));
+                modal.hide();
+                
+                // Uncheck the confirmation
+                document.getElementById('confirmReset').checked = false;
+                document.getElementById('resetBtn').disabled = true;
+                
+                // Optional: Reload the page after a short delay to reflect changes
+                if (response.ok) {
+                    setTimeout(() => window.location.reload(), 1500);
+                }
+            } catch (error) {
+                showToast('danger', 'Failed to reset system: ' + error.message);
+            }
         }
     </script>
 </body>
