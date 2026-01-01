@@ -129,7 +129,7 @@
 <!-- Add this script at the bottom of your users.html -->
 <script th:inline="javascript">
     function updateActiveSessions() {
-        fetch('/api/sessions/active')
+        fetch('/api/user-sessions/active')
             .then(response => response.json())
             .then(sessions => {
                 const tbody = document.querySelector('#activeUsersTable tbody');
@@ -141,19 +141,36 @@
                         row.classList.add('table-primary');
                     }
 
-                    // Format login time
-                    const loginTime = new Date(session.loginTime[0], session.loginTime[1]-1, session.loginTime[2],
-                                            session.loginTime[3], session.loginTime[4], session.loginTime[5]);
-                    const lastActivity = new Date(session.lastActivity[0], session.lastActivity[1]-1,
-                                               session.lastActivity[2], session.lastActivity[3],
-                                               session.lastActivity[4], session.lastActivity[5]);
+                    // Format date and time with activity type
+                    const formatDateTime = (dateTimeStr, activityType) => {
+                        if (!dateTimeStr) return 'N/A';
+                        const date = new Date(dateTimeStr);
+                        if (isNaN(date.getTime())) return 'Invalid date';
+                        
+                        // Format the date and time
+                        const formattedDate = date.toLocaleString();
+                        
+                        // Map activity types to user-friendly strings
+                        const activityMap = {
+                            'LOGIN': 'Logged in',
+                            'PAGE_VIEW': 'Viewed page',
+                            'API_CALL': 'Made API call',
+                            'FORM_SUBMIT': 'Submitted form'
+                        };
+                        
+                        const activityText = activityMap[activityType] || activityType || 'Performed action';
+                        return `${formattedDate}<br><small class="text-muted">${activityText}</small>`;
+                    };
+
+                    const loginTime = formatDateTime(session.loginTime, 'LOGIN');
+                    const lastActivity = formatDateTime(session.lastActivity, session.lastActivityType);
 
                     // Create and append cells
                     row.innerHTML = `
                         <td>${session.username} ${session.username === /*[[${#authentication.name}]]*/ '' ?
                             '<span class="badge bg-primary ms-2">You</span>' : ''}</td>
-                        <td>${loginTime.toLocaleString()}</td>
-                        <td>${lastActivity.toLocaleString()}</td>
+                        <td>${loginTime}</td>
+                        <td>${lastActivity}</td>
                         <td>${session.ipAddress || 'N/A'}</td>
                         <td title="${session.userAgent || ''}">
                             ${session.userAgent ? (session.userAgent.length > 50 ?

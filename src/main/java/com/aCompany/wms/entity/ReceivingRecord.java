@@ -1,10 +1,8 @@
 package com.aCompany.wms.entity;
 
+import com.aCompany.wms.model.Product;
 import com.aCompany.wms.model.StockLocation;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
@@ -25,6 +23,27 @@ public class ReceivingRecord {
     @ManyToOne
     private StockLocation allocatedLocation;
 
+    @Enumerated(EnumType.STRING)
+    private ReceivingStatus status;
+
+    @ManyToOne
+    private Product product;
+
+    private int putAwayQuantity = 0;
+
+    public int getRemainingQuantity() {
+        return this.quantity - this.putAwayQuantity;
+    }
+
+    public int getPutAwayQuantity() {
+        return putAwayQuantity;
+    }
+
+    public void setPutAwayQuantity(int putAwayQuantity) {
+        this.putAwayQuantity = putAwayQuantity;
+    }
+
+
     // getters and setters
 
     public String getSku() {
@@ -41,6 +60,14 @@ public class ReceivingRecord {
     }
 
 
+
+    public ReceivingStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ReceivingStatus status) {
+        this.status = status;
+    }
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
@@ -73,4 +100,30 @@ public class ReceivingRecord {
     public void setSku(String sku) {
         this.sku = sku;
     }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+        if (product != null) {
+            this.sku = product.getSku();
+        }
+    }
+    
+    public Long getId() {
+        return id;
+    }
+    
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+
+    public int getQuantity() {
+        return quantity;
+    }
 }
+
+

@@ -9,7 +9,7 @@ import com.aCompany.wms.model.ActiveUser;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/sessions")
+@RequestMapping("/api/user-sessions")
 public class UserSessionController {
 
     private final UserSessionService userSessionService;

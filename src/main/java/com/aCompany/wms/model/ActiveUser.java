@@ -24,6 +24,9 @@ public class ActiveUser {
     @Column(name = "last_activity", nullable = false, columnDefinition = "TIMESTAMP")
     private LocalDateTime lastActivity;
 
+    @Column(name = "last_activity_type", length = 50, columnDefinition = "VARCHAR(50) DEFAULT 'PAGE_VIEW'")
+    private String lastActivityType = "PAGE_VIEW";  // e.g., "PAGE_VIEW", "API_CALL", "FORM_SUBMIT"
+
     // Getters and setters for the composite ID fields
     @Transient
     public String getSessionId() {
@@ -64,8 +67,18 @@ public class ActiveUser {
 
     public LocalDateTime getLastActivity() { return lastActivity; }
     public void setLastActivity(LocalDateTime lastActivity) { this.lastActivity = lastActivity; }
+    
+    public String getLastActivityType() { return lastActivityType; }
+    public void setLastActivityType(String lastActivityType) { this.lastActivityType = lastActivityType; }
 
     public void updateLastActivity() {
         this.lastActivity = LocalDateTime.now();
     }
+    
+    public void updateLastActivity(String activityType) {
+        this.lastActivity = LocalDateTime.now();
+        this.lastActivityType = activityType;
+    }
+
+
 }

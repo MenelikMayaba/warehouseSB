@@ -51,4 +51,6 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
 
     // Or if you have updatedAt field:
     List<Stock> findByUpdatedAtBetween(LocalDateTime start, LocalDateTime end);
+    @Query("SELECT s FROM Stock s LEFT JOIN FETCH s.location")
+    List<Stock> findAllWithLocation();
 }

@@ -1,6 +1,7 @@
 package com.aCompany.wms.repository;
 
 import com.aCompany.wms.model.StockTransaction;
+import com.aCompany.wms.model.TransactionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,11 +21,11 @@ public interface StockTransactionRepository extends JpaRepository<StockTransacti
     @Query("SELECT t FROM StockTransaction t WHERE t.type = ?1")
     List<StockTransaction> findByType(String type);
     
-    List<StockTransaction> findByType(StockTransaction.TransactionType type);
+    List<StockTransaction> findByType(TransactionType type);
 
     List<StockTransaction> findByScannedByOrderByScannedAtDesc(String username);
 
-    List<StockTransaction> findByTypeOrderByScannedAtDesc(StockTransaction.TransactionType type);
+    List<StockTransaction> findByTypeOrderByScannedAtDesc(TransactionType type);
 
     List<StockTransaction> findByProductIdOrderByScannedAtDesc(Long productId);
 

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ActiveUserRepository extends JpaRepository<ActiveUser, String> {
@@ -17,7 +18,7 @@ public interface ActiveUserRepository extends JpaRepository<ActiveUser, String> 
     List<ActiveUser> findByUserId(@Param("userId") Long userId);
 
     @Query("SELECT au FROM ActiveUser au WHERE au.id.sessionId = :sessionId")
-    ActiveUser findBySessionId(@Param("sessionId") String sessionId);
+    Optional<ActiveUser> findBySessionId(@Param("sessionId") String sessionId);
 
     @Modifying
     @Query("DELETE FROM ActiveUser au WHERE au.id.userId = :userId")

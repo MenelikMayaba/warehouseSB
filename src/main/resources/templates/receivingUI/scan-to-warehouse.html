@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan to Warehouse - Warehouse Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/receiving.css}" rel="stylesheet">
+    <style>
+        .action-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .action-card {
+            transition: transform 0.2s;
+            height: 100%;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .action-link {
+            text-decoration: none;
+            color: inherit;
+        }
+        .scan-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Warehouse SB</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" th:href="@{/receiving}">Back to Dashboard</a>
+                <span class="nav-item nav-link">Welcome, <span th:text="${#authentication.name}"></span></span>
+                <a class="nav-link" th:href="@{/logout}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1>Scan to Warehouse</h1>
+                <p class="text-muted">Scan or enter product details to receive inventory</p>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="scan-container">
+                    <form th:action="@{/receiving/scan}" method="post" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="sku" class="form-label">Product SKU</label>
+                            <input type="text" class="form-control form-control-lg" id="sku" name="sku" 
+                                   placeholder="Scan or enter SKU" required autofocus>
+                            <div class="invalid-feedback">
+                                Please provide a valid SKU.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control form-control-lg" id="quantity" 
+                                   name="quantity" min="1" value="1" required>
+                            <div class="invalid-feedback">
+                                Please provide a valid quantity.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="locationId" class="form-label">Destination Location</label>
+                            <select class="form-select form-select-lg" id="locationId" name="locationId" required>
+                                <option value="" selected disabled>Select a location</option>
+                                <option th:each="location : ${locations}" 
+                                        th:value="${location.id}" 
+                                        th:text="${location.name + ' (' + location.aisle + ')'}">
+                                </option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a location.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-upc-scan"></i> Process Receipt
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <h4>Quick Actions</h4>
+                        <div class="d-flex gap-3">
+                            <a href="#" class="btn btn-outline-secondary">
+                                <i class="bi bi-upc-scan"></i> Scan Barcode
+                            </a>
+                            <a href="#" class="btn btn-outline-secondary">
+                                <i class="bi bi-qr-code-scan"></i> Scan QR Code
+                            </a>
+                            <a th:href="@{/receiving}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Example starter JavaScript for disabling form submissions if there are invalid fields
+        (function () {
+            'use strict'
+            
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            const forms = document.querySelectorAll('.needs-validation')
+            
+            // Loop over them and prevent submission
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+    </script>
+</body>
+</html>

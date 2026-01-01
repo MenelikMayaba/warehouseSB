@@ -2,6 +2,7 @@ package com.aCompany.wms.service;
 
 import com.aCompany.wms.model.Order;
 import com.aCompany.wms.model.StockTransaction;
+import com.aCompany.wms.model.TransactionType;
 import com.aCompany.wms.repository.StockTransactionRepository;
 import com.aCompany.wms.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ public class DispatchService {
         jmsTemplate.convertAndSend("dispatchQueue", order.getId());
 
         StockTransaction tx = new StockTransaction();
-        tx.setType(StockTransaction.TransactionType.valueOf("DISPATCH"));
+        tx.setType(TransactionType.valueOf("DISPATCH"));
         tx.setQuantity(order.getInvoices().size());
         tx.setTimestamp(LocalDateTime.now());
         tx.setPerformedBy(SecurityUtil.getCurrentUsername());

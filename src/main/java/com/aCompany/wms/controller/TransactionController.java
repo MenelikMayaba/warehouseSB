@@ -1,6 +1,7 @@
 package com.aCompany.wms.controller;
 
 import com.aCompany.wms.model.StockTransaction;
+import com.aCompany.wms.model.TransactionType;
 import com.aCompany.wms.repository.StockTransactionRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,7 +32,7 @@ public class TransactionController {
     }
 
     @GetMapping("/type/{type}")
-    public List<StockTransaction> getTransactionsByType(@PathVariable StockTransaction.TransactionType type) {
+    public List<StockTransaction> getTransactionsByType(@PathVariable TransactionType type) {
         return transactionRepository.findByTypeOrderByScannedAtDesc(type);
     }
 }

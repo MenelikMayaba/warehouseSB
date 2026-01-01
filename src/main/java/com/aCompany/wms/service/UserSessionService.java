@@ -39,7 +39,7 @@ public class UserSessionService {
         activeUser.setIpAddress(ipAddress);
         activeUser.setUserAgent(userAgent);
         activeUser.setLoginTime(now);
-        activeUser.setLastActivity(now);
+        activeUser.updateLastActivity("LOGIN");
 
         activeUserRepository.save(activeUser);
 
@@ -60,12 +60,16 @@ public class UserSessionService {
     }
 
     @Transactional
-    public void updateLastActivity(String sessionId) {
-        ActiveUser activeUser = activeUserRepository.findBySessionId(sessionId);
-        if (activeUser != null) {
-            activeUser.updateLastActivity();
+    public void updateActivity(String sessionId) {
+        updateActivity(sessionId, "PAGE_VIEW");
+    }
+    
+    @Transactional
+    public void updateActivity(String sessionId, String activityType) {
+        activeUserRepository.findBySessionId(sessionId).ifPresent(activeUser -> {
+            activeUser.updateLastActivity(activityType);
             activeUserRepository.save(activeUser);
-        }
+        });
     }
 
     @Transactional
@@ -118,14 +122,19 @@ public class UserSessionService {
     }
 
     @PreDestroy
-    @Transactional
     public void onShutdown() {
         try {
-            long count = activeUserRepository.count();
-            activeUserRepository.deleteAll();
-            logger.info("Cleared {} active sessions during server shutdown", count);
+            // Don't use @Transactional here as the transaction manager might be shutting down
+            logger.info("Server shutdown detected. Clearing all active sessions...");
+            try {
+                long count = activeUserRepository.count();
+                activeUserRepository.deleteAll();
+                logger.info("Cleared {} active sessions during server shutdown", count);
+            } catch (Exception e) {
+                logger.warn("Could not clear active sessions during shutdown: {}", e.getMessage());
+            }
         } catch (Exception e) {
-            logger.error("Error clearing active sessions during shutdown", e);
+            logger.error("Error during shutdown cleanup", e);
         }
     }
 }

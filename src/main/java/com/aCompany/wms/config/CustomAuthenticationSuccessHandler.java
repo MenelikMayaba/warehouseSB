@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 @Component
 public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
@@ -20,50 +21,47 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         this.sessionEventListener = sessionEventListener;
     }
 
+    private static final Map<String, String> ROLE_REDIRECTS = Map.of(
+        "ROLE_ADMIN", "/admin",
+        "ROLE_RECEIVER", "/receiving",
+        "ROLE_PICKER", "/picker",
+        "ROLE_PACKER", "/packer",
+        "ROLE_DISPATCHER", "/dispatch"
+    );
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
+        handleUserSession(authentication, request);
+        redirectBasedOnRole(authentication, response);
+    }
 
-        // Get user details
+    private void handleUserSession(Authentication authentication, HttpServletRequest request) {
+        String username = extractUsername(authentication);
+        Long userId = getUserIdFromAuthentication(authentication);
+        sessionEventListener.onAuthenticationSuccess(username, userId, request);
+    }
+
+    private String extractUsername(Authentication authentication) {
         Object principal = authentication.getPrincipal();
-        String username = principal instanceof org.springframework.security.core.userdetails.User
+        return principal instanceof org.springframework.security.core.userdetails.User
                 ? ((org.springframework.security.core.userdetails.User) principal).getUsername()
                 : principal.toString();
+    }
 
-        // Get user ID (you'll need to inject UserRepository to get the ID)
-        // For now, we'll use the username as a placeholder
-        Long userId = getUserIdFromAuthentication(authentication);
+    private void redirectBasedOnRole(Authentication authentication, HttpServletResponse response) throws IOException {
+        String redirectUrl = findMatchingRedirectUrl(authentication.getAuthorities());
+        response.sendRedirect(redirectUrl);
+    }
 
-        // Register the login with session tracking
-        sessionEventListener.onAuthenticationSuccess(username, userId, request);
-
-        // Handle role-based redirection
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        for (GrantedAuthority authority : authorities) {
-            if (authority.getAuthority().equals("ROLE_ADMIN")) {
-                response.sendRedirect("/admin");
-                return;
-            }
-
-            if (authority.getAuthority().equals("ROLE_PICKER")) {
-                response.sendRedirect("/picker");
-                return;
-            }
-
-            if (authority.getAuthority().equals("ROLE_PACKER")) {
-                response.sendRedirect("/packer");
-                return;
-            }
-
-            if (authority.getAuthority().equals("ROLE_DISPATCHER")) {
-                response.sendRedirect("/dispatch");
-                return;
-            }
-        }
-
-        // Default redirect for other roles
-        response.sendRedirect("/");
+    private String findMatchingRedirectUrl(Collection<? extends GrantedAuthority> authorities) {
+        return authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(ROLE_REDIRECTS::containsKey)
+                .findFirst()
+                .map(ROLE_REDIRECTS::get)
+                .orElse("/");
     }
 
     private Long getUserIdFromAuthentication(Authentication authentication) {

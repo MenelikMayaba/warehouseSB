@@ -3,6 +3,7 @@ package com.aCompany.wms.service;
 import com.aCompany.wms.model.Product;
 import com.aCompany.wms.model.Stock;
 import com.aCompany.wms.model.StockTransaction;
+import com.aCompany.wms.model.TransactionType;
 import com.aCompany.wms.repository.StockRepository;
 import com.aCompany.wms.repository.StockTransactionRepository;
 import com.aCompany.wms.util.SecurityUtil;
@@ -24,7 +25,7 @@ public class PackingService {
         boolean pass = product.getQuantity() >= expectedQty;
 
         StockTransaction tx = new StockTransaction();
-        tx.setType(StockTransaction.TransactionType.valueOf(pass ? "PACK_OK" : "PACK_FAIL"));
+        tx.setType(TransactionType.valueOf(pass ? "PACK_OK" : "PACK_FAIL"));
         tx.setQuantity(expectedQty);
         tx.setProduct(product);
         tx.setTimestamp(LocalDateTime.now());
@@ -44,7 +45,7 @@ public class PackingService {
             stockRepository.save(stock);
 
             StockTransaction tx = new StockTransaction();
-            tx.setType(StockTransaction.TransactionType.PACK_RECOVERY);
+            tx.setType(TransactionType.PACK_RECOVERY);
             tx.setQuantity(1);
             tx.setProduct(product);
             tx.setTimestamp(LocalDateTime.now());

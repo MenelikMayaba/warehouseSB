@@ -29,10 +29,6 @@ public class StockTransaction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id")
     private StockLocation location;
-    
-    public enum TransactionType {
-        RECEIVED, PICKED, ADJUSTED, REMOVED, PUTAWAY, MOVED, SCANNED, DISPATCHED, RETURNED, PICK, PACK_RECOVERY
-    }
 
     public TransactionType getType() {
         return type;

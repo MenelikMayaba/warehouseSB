@@ -3,6 +3,7 @@ package com.aCompany.wms.service;
 import com.aCompany.wms.exceptions.InvoiceNotFoundException;
 import com.aCompany.wms.model.Invoice;
 import com.aCompany.wms.model.StockTransaction;
+import com.aCompany.wms.model.TransactionType;
 import com.aCompany.wms.repository.InvoiceRepository;
 import com.aCompany.wms.repository.StockTransactionRepository;
 import com.aCompany.wms.util.SecurityUtil;
@@ -28,7 +29,7 @@ public class PickingService {
         invoiceRepository.save(invoice);
 
         StockTransaction tx = new StockTransaction();
-        tx.setType(StockTransaction.TransactionType.valueOf("PICK"));
+        tx.setType(TransactionType.valueOf("PICK"));
         tx.setQuantity(1);
         tx.setTimestamp(LocalDateTime.now());
         tx.setPerformedBy(SecurityUtil.getCurrentUsername());

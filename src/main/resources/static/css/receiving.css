@@ -1,0 +1,32 @@
+/* Receiving Dashboard Styles */
+.action-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    height: 100%;
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.action-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.action-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.action-link:hover {
+    text-decoration: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .action-card {
+        margin-bottom: 1rem;
+    }
+}

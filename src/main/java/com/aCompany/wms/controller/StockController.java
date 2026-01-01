@@ -45,7 +45,7 @@ public class StockController {
     @GetMapping("/stockView")
     @PreAuthorize("hasRole('ADMIN')")
     public String viewStockPage(Model model) {
-        List<Stock> allStock = stockRepository.findAll();
+        List<Stock> allStock = stockRepository.findAllWithLocation();
         model.addAttribute("items", allStock);
         model.addAttribute("allStock", allStock);
         model.addAttribute("products", productRepository.findAll());

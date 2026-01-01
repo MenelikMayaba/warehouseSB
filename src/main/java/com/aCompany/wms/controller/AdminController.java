@@ -51,10 +51,9 @@ public class AdminController {
 
     // Serve the admin page
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public String adminPage(Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && !(authentication.getPrincipal() instanceof String)) {
+        if (userAuthenticated()) {
             model.addAttribute("currentUser", authentication.getName());
             model.addAttribute("username", authentication.getName());
         }
@@ -64,25 +63,9 @@ public class AdminController {
         return "admin/dashboard";
     }
 
-    // Serve the users page
-    @GetMapping("/users")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String usersPage(Model model) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() &&
-                !(authentication.getPrincipal() instanceof String)) {
-            model.addAttribute("username", authentication.getName());
-            model.addAttribute("currentUser", authentication.getName()); // Add current user
-        }
-        model.addAttribute("users", userRepository.findAll());
-        model.addAttribute("activeUsers", userSessionService.getActiveUsers()); // Add active users
-        model.addAttribute("allRoles", Set.of("ADMIN", "PICKER", "PACKER", "DISPATCHER", "RECEIVER"));
-        return "admin/users/users";
-    }
 
     // Serve the add user page
     @GetMapping("/users/new")
-    @PreAuthorize("hasRole('ADMIN')")
     public String showAddUserForm(Model model) {
         model.addAttribute("userDto", new UserDto());
         model.addAttribute("allRoles", Set.of("ADMIN", "PICKER", "PACKER", "DISPATCHER", "RECEIVER"));
@@ -91,20 +74,34 @@ public class AdminController {
 
     // Serve the admin settings page
     @GetMapping("/adminSettings")
-    @PreAuthorize("hasRole('ADMIN')")
     public String adminSettings(Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && !(authentication.getPrincipal() instanceof String)) {
+        if (userAuthenticated()) {
             model.addAttribute("username", authentication.getName());
         }
         return "admin/adminSettings";
     }
 
+    @GetMapping("/users")
+    public String listUsers(Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (userAuthenticated()) {
+            model.addAttribute("username", authentication.getName());
+        }
+        model.addAttribute("users", userRepository.findAll());
+        return "admin/users/users";
+    }
+
+    private boolean userAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.isAuthenticated() && !(authentication.getPrincipal() instanceof String);
+    }
+
+
     // API Endpoints
 
 
-    @GetMapping("/admin/users/users")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/api/admin/users")
     public ResponseEntity<ApiResponse<List<User>>> getAllUsersApi() {
         return ResponseEntity.ok(ApiResponse.success(userRepository.findAll()));
     }
@@ -118,7 +115,6 @@ public class AdminController {
 
     // Serve the add user page
     @PostMapping("/users")
-    @PreAuthorize("hasRole('ADMIN')")
     public String createUser(@Valid UserDto userDto, BindingResult result, Model model) {
         if (result.hasErrors()) {
             model.addAttribute("allRoles", Set.of("ADMIN", "PICKER", "PACKER", "DISPATCHER", "RECEIVER"));
@@ -141,6 +137,53 @@ public class AdminController {
     }
 
     // Serve the delete user page
+    @GetMapping("/users/{id}/edit")
+    public String showEditUserForm(@PathVariable Long id, Model model) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + id));
+        
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setUsername(user.getUsername());
+        userDto.setRoles(user.getRoles());
+        
+        model.addAttribute("user", userDto);
+        model.addAttribute("allRoles", Set.of("ADMIN", "PICKER", "PACKER", "DISPATCHER", "RECEIVER"));
+        return "admin/users/edit";
+    }
+    
+    @PostMapping("/users/{id}")
+    public String updateUser(@PathVariable Long id, @Valid @ModelAttribute("user") UserDto userDto, 
+                           BindingResult result, Model model) {
+        if (result.hasErrors()) {
+            model.addAttribute("allRoles", Set.of("ADMIN", "PICKER", "PACKER", "DISPATCHER", "RECEIVER"));
+            return "admin/users/edit";
+        }
+        
+        User existingUser = userRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + id));
+        
+        // Check if username is already taken by another user
+        if (!existingUser.getUsername().equals(userDto.getUsername()) && 
+            userRepository.findByUsername(userDto.getUsername()).isPresent()) {
+            model.addAttribute("error", "Username already exists");
+            model.addAttribute("allRoles", Set.of("ADMIN", "PICKER", "PACKER", "DISPATCHER", "RECEIVER"));
+            return "admin/users/edit";
+        }
+        
+        existingUser.setUsername(userDto.getUsername());
+        
+        // Only update password if a new one was provided
+        if (userDto.getPassword() != null && !userDto.getPassword().trim().isEmpty()) {
+            existingUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        }
+        
+        existingUser.setRoles(userDto.getRoles());
+        userRepository.save(existingUser);
+        
+        return "redirect:/admin/users";
+    }
+    
     @PostMapping("/users/{id}/delete")
     public String deleteUser(@PathVariable Long id) {
         userRepository.deleteById(id);
@@ -149,7 +192,6 @@ public class AdminController {
 
     // Serve the stock view page
     @GetMapping("/admin/stockView")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<Product>>> getAllStockApi() {
         return ResponseEntity.ok(ApiResponse.success(stockService.getAllStock()));
     }
@@ -197,7 +239,6 @@ public class AdminController {
     // Serve the clear cache page
     @PostMapping("/clearCache")
     @ResponseBody
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> clearSystemCache() {
         try {
             // Clear Spring's cache
@@ -212,7 +253,6 @@ public class AdminController {
     // Serve the backup database page
     @PostMapping("/backupDatabase")
     @ResponseBody
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> backUpDatabase() {
         try {
             // In a real implementation, this would back up to a file or cloud storage
@@ -233,7 +273,6 @@ public class AdminController {
     // Serve the reset system page
     @PostMapping("/resetSystem")
     @ResponseBody
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> resetSystem() {
         try {
             // Keep only admin users

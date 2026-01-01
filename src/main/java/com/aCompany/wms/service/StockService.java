@@ -3,10 +3,7 @@ package com.aCompany.wms.service;
 import com.aCompany.wms.dto.StockAdjustmentDto;
 import com.aCompany.wms.dto.StockReceiptDto;
 import com.aCompany.wms.exceptions.*;
-import com.aCompany.wms.model.Product;
-import com.aCompany.wms.model.Stock;
-import com.aCompany.wms.model.StockLocation;
-import com.aCompany.wms.model.StockTransaction;
+import com.aCompany.wms.model.*;
 import com.aCompany.wms.dto.StockPickDto;
 import com.aCompany.wms.repository.*;
 import com.aCompany.wms.util.SecurityUtil;
@@ -168,7 +165,7 @@ public class StockService {
         productRepository.save(product);
 
         StockTransaction tx = new StockTransaction();
-        tx.setType(StockTransaction.TransactionType.PUTAWAY);
+        tx.setType(TransactionType.PUT_AWAY);
         tx.setQuantity(product.getQuantity());
         tx.setProduct(product);
         tx.setLocation(location);
@@ -183,9 +180,9 @@ public class StockService {
     private void logTransaction(Product product, String type, int quantity, String reference, String notes) {
         StockTransaction tx = new StockTransaction();
         try {
-            tx.setType(StockTransaction.TransactionType.valueOf(type));
+            tx.setType(TransactionType.valueOf(type));
         } catch (IllegalArgumentException e) {
-            tx.setType(StockTransaction.TransactionType.ADJUSTED); // Default type if not found
+            tx.setType(TransactionType.ADJUSTED); // Default type if not found
         }
         tx.setProduct(product);
         tx.setQuantity(quantity);
@@ -247,23 +244,35 @@ public class StockService {
     
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public void removeStock(Long productId, Long locationId, int quantity, String batchNumber) throws ProductNotFoundException, LocationNotFoundException, StockNotFoundException {
-        // First verify the product and location exist
+    public void removeStock(Long productId, Long locationId, int quantity, String batchNumber)
+            throws ProductNotFoundException, LocationNotFoundException, StockNotFoundException {
+
+        validateStockRemoval(productId, locationId, batchNumber, quantity);
+        Stock stock = findStockForRemoval(productId, locationId, batchNumber);
+        updateStockQuantity(stock, quantity);
+        logStockRemoval(stock, quantity, batchNumber);
+    }
+
+    private void validateStockRemoval(Long productId, Long locationId, String batchNumber, int quantity)
+            throws ProductNotFoundException, LocationNotFoundException {
         if (!productRepository.existsById(productId)) {
             throw new ProductNotFoundException("Product not found with ID: " + productId);
         }
         if (!locationRepository.existsById(locationId)) {
             throw new LocationNotFoundException("Location not found with ID: " + locationId);
         }
+    }
 
-        // Then find the stock entry
-        Stock stock = (Stock) stockRepository.findByProductIdAndLocationIdAndBatchNumber(
+    private Stock findStockForRemoval(Long productId, Long locationId, String batchNumber)
+            throws StockNotFoundException {
+        return stockRepository.findByProductIdAndLocationIdAndBatchNumber(
                         productId, locationId, batchNumber)
                 .orElseThrow(() -> new StockNotFoundException(
                         String.format("No stock found for product ID %d at location %d with batch %s",
                                 productId, locationId, batchNumber != null ? batchNumber : "N/A")));
+    }
 
-        // Rest of the method remains the same
+    private void updateStockQuantity(Stock stock, int quantity) {
         if (stock.getQuantity() < quantity) {
             throw new InsufficientStockException(
                     String.format("Insufficient stock. Available: %d, Requested to remove: %d",
@@ -274,7 +283,9 @@ public class StockService {
         stock.setQuantity(stock.getQuantity() - quantity);
         stock.setUpdatedAt(LocalDateTime.now());
         stockRepository.save(stock);
+    }
 
+    private void logStockRemoval(Stock stock, int quantity, String batchNumber) {
         logTransaction(
                 stock.getProduct(),
                 "REMOVED",
