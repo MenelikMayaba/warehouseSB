@@ -1,7 +1,6 @@
 package com.aCompany.wms.entity;
 
 import com.aCompany.wms.model.Product;
-import com.aCompany.wms.model.StockLocation;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -21,7 +20,7 @@ public class ReceivingRecord {
     private String receivedBy;
 
     @ManyToOne
-    private StockLocation allocatedLocation;
+    private Location allocatedLocation;
 
     @Enumerated(EnumType.STRING)
     private ReceivingStatus status;
@@ -89,11 +88,11 @@ public class ReceivingRecord {
         this.receivedBy = receivedBy;
     }
 
-    public StockLocation getAllocatedLocation() {
+    public Location getAllocatedLocation() {
         return allocatedLocation;
     }
 
-    public void setAllocatedLocation(StockLocation allocatedLocation) {
+    public void setAllocatedLocation(Location allocatedLocation) {
         this.allocatedLocation = allocatedLocation;
     }
 

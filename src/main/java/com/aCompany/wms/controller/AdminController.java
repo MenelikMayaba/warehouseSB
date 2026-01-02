@@ -23,6 +23,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.RequestAttributes;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,7 +53,7 @@ public class AdminController {
 
 
     // Serve the admin page
-    @GetMapping
+    @GetMapping("/dashboard")
     public String adminPage(Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (userAuthenticated()) {
@@ -136,7 +139,7 @@ public class AdminController {
         return "redirect:/admin/users";
     }
 
-    // Serve the delete user page
+    // Serve the edit user page
     @GetMapping("/users/{id}/edit")
     public String showEditUserForm(@PathVariable Long id, Model model) {
         User user = userRepository.findById(id)
@@ -147,12 +150,19 @@ public class AdminController {
         userDto.setUsername(user.getUsername());
         userDto.setRoles(user.getRoles());
         
+        // Add CSRF token to the model
+        CsrfToken csrfToken = (CsrfToken) RequestContextHolder.getRequestAttributes()
+            .getAttribute("_csrf", RequestAttributes.SCOPE_REQUEST);
+        if (csrfToken != null) {
+            model.addAttribute("_csrf", csrfToken);
+        }
+        
         model.addAttribute("user", userDto);
         model.addAttribute("allRoles", Set.of("ADMIN", "PICKER", "PACKER", "DISPATCHER", "RECEIVER"));
         return "admin/users/edit";
     }
     
-    @PostMapping("/users/{id}")
+    @PutMapping("/users/{id}")
     public String updateUser(@PathVariable Long id, @Valid @ModelAttribute("user") UserDto userDto, 
                            BindingResult result, Model model) {
         if (result.hasErrors()) {

@@ -1,5 +1,6 @@
 package com.aCompany.wms.model;
 
+import com.aCompany.wms.entity.Location;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -20,7 +21,7 @@ public class Stock {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", nullable = false)
-    private StockLocation location;
+    private Location location;
     
     private int quantity;
     
@@ -51,13 +52,13 @@ public class Stock {
     public Stock() {
     }
     
-    public Stock(Product product, StockLocation location, int quantity) {
+    public Stock(Product product, Location location, int quantity) {
         this.product = product;
         this.location = location;
         this.quantity = quantity;
     }
     
-    public Stock(Product product, StockLocation location, int quantity, String batchNumber, 
+    public Stock(Product product, Location location, int quantity, String batchNumber,
                 LocalDateTime manufacturingDate, LocalDateTime expiryDate) {
         this.product = product;
         this.location = location;
@@ -84,11 +85,11 @@ public class Stock {
         this.product = product;
     }
     
-    public StockLocation getLocation() {
+    public Location getLocation() {
         return location;
     }
     
-    public void setLocation(StockLocation location) {
+    public void setLocation(Location location) {
         this.location = location;
     }
     

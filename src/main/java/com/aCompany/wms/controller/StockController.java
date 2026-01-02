@@ -1,14 +1,14 @@
 package com.aCompany.wms.controller;
 
 import com.aCompany.wms.dto.ApiResponse;
+import com.aCompany.wms.entity.Location;
+import com.aCompany.wms.repository.LocationRepository;
 import com.aCompany.wms.exceptions.LocationNotFoundException;
 import com.aCompany.wms.exceptions.ProductNotFoundException;
 import com.aCompany.wms.exceptions.StockNotFoundException;
 import com.aCompany.wms.model.Product;
 import com.aCompany.wms.model.Stock;
-import com.aCompany.wms.model.StockLocation;
 import com.aCompany.wms.repository.ProductRepository;
-import com.aCompany.wms.repository.StockLocationRepository;
 import com.aCompany.wms.repository.StockRepository;
 import com.aCompany.wms.service.StockService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,17 +29,18 @@ public class StockController {
     private final StockService stockService;
     private final StockRepository stockRepository;
     private final ProductRepository productRepository;
-    private final StockLocationRepository locationRepository;
+    private final LocationRepository locationRepository;
 
     @Autowired
-    public StockController(StockService stockService, 
-                         StockRepository stockRepository,
-                         ProductRepository productRepository,
-                         StockLocationRepository locationRepository) {
+    public StockController(StockService stockService,
+                           StockRepository stockRepository,
+                           ProductRepository productRepository,
+                           LocationRepository locationRepository) {
         this.stockService = stockService;
         this.stockRepository = stockRepository;
         this.productRepository = productRepository;
         this.locationRepository = locationRepository;
+
     }
 
     @GetMapping("/stockView")
@@ -61,8 +62,8 @@ public class StockController {
                           @RequestParam(required = false) String batchNumber) {
         Product product = productRepository.findById(productId)
             .orElseThrow(() -> new IllegalArgumentException("Invalid product ID: " + productId));
-            
-        StockLocation location = locationRepository.findById(locationId)
+
+        Location location = locationRepository.findById(locationId)
             .orElseThrow(() -> new IllegalArgumentException("Invalid location ID: " + locationId));
             
         Stock stock = new Stock(product, location, quantity, batchNumber, null, null);

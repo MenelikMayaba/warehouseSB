@@ -9,7 +9,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.SecurityContextPersistenceFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
+import org.springframework.web.filter.HiddenHttpMethodFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -25,7 +28,7 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/webjars/**", "/api/sessions/**").permitAll()
                         .requestMatchers("/login", "/error").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/receiving/**").hasAnyRole("RECEIVER", "ADMIN")
+                        .requestMatchers("/receivingUI/**").hasAnyRole("RECEIVER", "ADMIN")
                         .requestMatchers("/picking/**").hasAnyRole("PICKER", "ADMIN")
                         .requestMatchers("/packing/**").hasAnyRole("PACKER", "ADMIN")
                         .requestMatchers("/dispatch/**").hasAnyRole("DISPATCHER", "ADMIN")
@@ -40,15 +43,20 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutSuccessUrl("/login?logout")
-                        .permitAll()
+                    .logoutUrl("/logout")
+                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                    .logoutSuccessUrl("/login?logout")
+                    .invalidateHttpSession(true)
+                    .deleteCookies("JSESSIONID")
+                    .clearAuthentication(true)
+                    .permitAll()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .maximumSessions(-1) // Allow unlimited sessions per user
                         .maxSessionsPreventsLogin(false) // Allow multiple logins
                 )
-                .csrf(csrf -> csrf.disable());
+                .addFilterBefore(new HiddenHttpMethodFilter(), SecurityContextPersistenceFilter.class);
 
 
         return http.build();

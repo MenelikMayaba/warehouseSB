@@ -2,6 +2,7 @@ package com.aCompany.wms.service;
 
 import com.aCompany.wms.dto.StockAdjustmentDto;
 import com.aCompany.wms.dto.StockReceiptDto;
+import com.aCompany.wms.entity.Location;
 import com.aCompany.wms.exceptions.*;
 import com.aCompany.wms.model.*;
 import com.aCompany.wms.dto.StockPickDto;
@@ -22,7 +23,7 @@ public class StockService {
 
     private final StockTransactionRepository transactionRepo;
     private final ProductRepository productRepository;
-    private final StockLocationRepository locationRepository;
+    private final LocationRepository locationRepository;
     private final UserRepository userRepository;
     private final StockRepository stockRepository;
 
@@ -30,7 +31,7 @@ public class StockService {
     public StockService(
                         StockTransactionRepository transactionRepo,
                         ProductRepository productRepository,
-                        StockLocationRepository locationRepository,
+                        LocationRepository locationRepository,
                         UserRepository userRepository, StockRepository stockRepository) {
 
         this.transactionRepo = transactionRepo;
@@ -160,7 +161,7 @@ public class StockService {
 
 
 
-    public void putAway(Product product, StockLocation location) {
+    public void putAway(Product product, Location location) {
         product.setLocation(location);
         productRepository.save(product);
 
@@ -258,7 +259,7 @@ public class StockService {
         if (!productRepository.existsById(productId)) {
             throw new ProductNotFoundException("Product not found with ID: " + productId);
         }
-        if (!locationRepository.existsById(locationId)) {
+        if (!stockRepository.existsById(locationId)) {
             throw new LocationNotFoundException("Location not found with ID: " + locationId);
         }
     }

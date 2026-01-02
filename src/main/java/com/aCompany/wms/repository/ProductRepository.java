@@ -63,4 +63,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Stock> getLowStockItems(@Param("threshold") int threshold);
 
     Optional<Product> findByProductIdAndLocationIdAndBatchNumber(Long aLong, Long aLong1, String s);
+
+    List<Product> findByNameContainingIgnoreCaseOrSkuContainingIgnoreCase(String query, String query1);
 }

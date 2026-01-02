@@ -1,7 +1,9 @@
 package com.aCompany.wms.service;
 
+import com.aCompany.wms.entity.Location;
 import com.aCompany.wms.entity.ReceivingRecord;
 import com.aCompany.wms.entity.ReceivingStatus;
+import com.aCompany.wms.model.TransactionType;
 import com.aCompany.wms.model.*;
 import com.aCompany.wms.repository.ProductRepository;
 import com.aCompany.wms.repository.ReceivingRepository;
@@ -31,7 +33,7 @@ public class ReceivingService {
     private StockTransactionRepository transactionRepository;
 
     @Transactional
-    public void receiveStock(String sku, int quantity, StockLocation receivingLocation) {
+    public void receiveStock(String sku, int quantity, Location receivingLocation) {
         // Validate product exists
         Product product = productRepository.findBySku(sku)
                 .orElseThrow(() -> new RuntimeException("Product not found with SKU: " + sku));
@@ -62,7 +64,7 @@ public class ReceivingService {
     }
 
     @Transactional
-    public void putAway(String sku, int quantity, StockLocation warehouseLocation) {
+    public void putAway(String sku, int quantity, Location warehouseLocation) {
         // Find the oldest received but not yet put away stock
         List<ReceivingRecord> receivedStock = receivingRepository
                 .findBySkuAndStatusOrderByReceivedAtAsc(sku, ReceivingStatus.RECEIVED);

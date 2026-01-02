@@ -1,8 +1,11 @@
 package com.aCompany.wms.controller;
 
+import com.aCompany.wms.entity.Location;
+import com.aCompany.wms.entity.ReceivingRecord;
+import com.aCompany.wms.entity.ReceivingStatus;
+import com.aCompany.wms.repository.LocationRepository;
+import com.aCompany.wms.repository.ReceivingRepository;
 import org.springframework.ui.Model;
-import com.aCompany.wms.model.StockLocation;
-import com.aCompany.wms.repository.StockLocationRepository;
 import com.aCompany.wms.service.ReceivingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/receiving")
 @PreAuthorize("hasRole('RECEIVING', 'ADMIN')")
@@ -22,7 +27,10 @@ public class ReceivingController {
     private ReceivingService receivingService;
 
     @Autowired
-    private StockLocationRepository locationRepository;
+    private LocationRepository locationRepository;
+
+    @Autowired
+    private ReceivingRepository receivingRepository;
 
     @GetMapping
     public String receivingPage(Model model) {
@@ -39,7 +47,24 @@ public class ReceivingController {
     @GetMapping("/put-away")
     public String showScanPutAway(Model model) {
         model.addAttribute("locations", locationRepository.findAll());
+
+        // Get all receiving records with their products
+        List<ReceivingRecord> receivingRecords = receivingRepository.findByStatus(ReceivingStatus.RECEIVED);
+
+        // Log the results for debugging
+        System.out.println("=== Receiving Records ===");
+        System.out.println("Found " + receivingRecords.size() + " receiving records");
+        receivingRecords.forEach(record -> {
+            System.out.println("Record ID: " + record.getId() +
+                    ", Product: " + (record.getProduct() != null ?
+                    record.getProduct().getName() + " (ID: " + record.getProduct().getId() + ")" : "null") +
+                    ", Qty: " + record.getQuantity() +
+                    ", Status: " + record.getStatus());
+        });
+
+        model.addAttribute("receivingRecords", receivingRecords);
         return "/receivingUI/put-away";
+
     }
 
 
@@ -51,7 +76,7 @@ public class ReceivingController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            StockLocation location = locationRepository.findById(locationId)
+            Location location = locationRepository.findById(locationId)
                     .orElseThrow(() -> new RuntimeException("Location not found"));
 
             receivingService.receiveStock(sku, quantity, location);
@@ -74,10 +99,10 @@ public class ReceivingController {
 
         try {
             // Get the source and destination locations
-            StockLocation fromLocation = locationRepository.findById(fromLocationId)
+            Location fromLocation = locationRepository.findById(fromLocationId)
                     .orElseThrow(() -> new RuntimeException("Source location not found"));
 
-            StockLocation toLocation = locationRepository.findById(toLocationId)
+            Location toLocation = locationRepository.findById(toLocationId)
                     .orElseThrow(() -> new RuntimeException("Destination location not found"));
 
             // Call the service to handle the put-away logic

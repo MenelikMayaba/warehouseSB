@@ -1,5 +1,6 @@
 package com.aCompany.wms.model;
 
+import com.aCompany.wms.entity.Location;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -26,7 +27,7 @@ public class Product {
     private Integer quantityInStock;
 
     @ManyToOne
-    private StockLocation location;
+    private Location location;
 
     @Column(nullable = false)
     private LocalDateTime lastUpdated;
@@ -132,7 +133,7 @@ public class Product {
         this.quantityInStock = i;
     }
 
-    public void setLocation(StockLocation location) {
+    public void setLocation(Location location) {
         this.location = location;
     }
 

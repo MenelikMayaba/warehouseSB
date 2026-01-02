@@ -22,7 +22,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
     }
 
     private static final Map<String, String> ROLE_REDIRECTS = Map.of(
-        "ROLE_ADMIN", "/admin",
+        "ROLE_ADMIN", "/admin/dashboard",
         "ROLE_RECEIVER", "/receiving",
         "ROLE_PICKER", "/picker",
         "ROLE_PACKER", "/packer",
@@ -56,6 +56,16 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
     }
 
     private String findMatchingRedirectUrl(Collection<? extends GrantedAuthority> authorities) {
+        // Check for ADMIN role first
+        boolean isAdmin = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+        
+        if (isAdmin) {
+            return ROLE_REDIRECTS.get("ROLE_ADMIN");
+        }
+        
+        // For non-admin users, use the existing logic
         return authorities.stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(ROLE_REDIRECTS::containsKey)

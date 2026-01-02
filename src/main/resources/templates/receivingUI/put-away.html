@@ -63,7 +63,7 @@
                             <label for="sku" class="form-label">Product SKU</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
-                                <input type="text" class="form-control form-control-lg" id="sku" name="sku" 
+                                <input type="text" class="form-control form-control-lg" id="sku" name="sku"
                                        placeholder="Scan or enter SKU" required autofocus>
                             </div>
                             <div class="invalid-feedback">
@@ -85,32 +85,29 @@
                 <div class="card location-card">
                     <div class="card-body">
                         <h5 class="card-title">2. Select Locations</h5>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="fromLocationId" class="form-label">From Location</label>
-                                <select class="form-select" id="fromLocationId" name="fromLocationId" required>
-                                    <option value="" selected disabled>Select source location</option>
-                                    <option th:each="location : ${locations}" 
-                                            th:if="${location.type == 'RECEIVING'}"
-                                            th:value="${location.id}" 
-                                            th:text="${location.name + ' (' + location.aisle + ')'}">
-                                    </option>
-                                </select>
-                                <div class="invalid-feedback">
-                                    Please select a source location.
-                                </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="receivingRecordId" class="form-label">From location</label>
+                            <select class="form-select" id="receivingRecordId" name="receivingRecordId" required>
+                                <option value="" selected disabled>Select receiving record</option>
+                                <option th:each="record : ${receivingRecords}"
+                                        th:value="${record.id}"
+                                        th:text="'ID: ' + ${record.id} + ' - ' + ${record.product.name} + ' (Qty: ' + ${record.quantity} + ')'">
+                                </option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a receiving record.
                             </div>
+                        </div>
                             
                             <div class="col-md-6 mb-3">
                                 <label for="toLocationId" class="form-label">To Location</label>
                                 <select class="form-select" id="toLocationId" name="toLocationId" required>
                                     <option value="" selected disabled>Select destination location</option>
-                                    <option th:each="location : ${locations}" 
-                                            th:if="${location.type == 'STORAGE'}"
-                                            th:value="${location.id}" 
-                                            th:text="${location.name + ' (' + location.aisle + ')'}">
-                                    </option>
+                                    <option th:each="record : ${receivingRecords}"
+                                            th:value="${record.id}"
+                                            th:with="productName=${record.product != null ? record.product.name : 'Unknown Product'}"
+                                            th:text="'ID: ' + ${record.id} + ' - ' + ${productName} + ' (Qty: ' + ${record.quantity} + ')'">
                                 </select>
                                 <div class="invalid-feedback">
                                     Please select a destination location.

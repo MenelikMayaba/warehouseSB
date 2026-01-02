@@ -1,5 +1,6 @@
 package com.aCompany.wms.model;
 
+import com.aCompany.wms.entity.Location;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -28,7 +29,7 @@ public class StockTransaction {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id")
-    private StockLocation location;
+    private Location location;
 
     public TransactionType getType() {
         return type;
@@ -134,11 +135,11 @@ public class StockTransaction {
         this.product = product;
     }
     
-    public StockLocation getLocation() {
+    public Location getLocation() {
         return location;
     }
     
-    public void setLocation(StockLocation location) {
+    public void setLocation(Location location) {
         this.location = location;
     }
 
