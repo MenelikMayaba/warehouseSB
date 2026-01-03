@@ -1,17 +1,19 @@
 package com.aCompany.wms.controller;
 
 import com.aCompany.wms.dto.ApiResponse;
+import com.aCompany.wms.dto.OrderForm;
 import com.aCompany.wms.dto.UserDto;
 import com.aCompany.wms.User.User;
 import com.aCompany.wms.model.LogEntry;
+import com.aCompany.wms.model.Order;
 import com.aCompany.wms.model.Product;
 
+import com.aCompany.wms.model.Stock;
 import com.aCompany.wms.repository.LogEntryRepository;
 import com.aCompany.wms.repository.ProductRepository;
+import com.aCompany.wms.repository.StockRepository;
 import com.aCompany.wms.repository.UserRepository;
-import com.aCompany.wms.service.LoggingService;
-import com.aCompany.wms.service.StockService;
-import com.aCompany.wms.service.UserSessionService;
+import com.aCompany.wms.service.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,7 +53,12 @@ public class AdminController {
     private LogEntryRepository logEntryRepository;
     @Autowired
     private UserSessionService userSessionService;
-
+    @Autowired
+    private OrderService orderService;
+    @Autowired
+    private PickingService pickingService;
+    @Autowired
+    private StockRepository stockRepository;
 
     // Serve the admin page
     @GetMapping("/dashboard")
@@ -60,10 +68,58 @@ public class AdminController {
             model.addAttribute("currentUser", authentication.getName());
             model.addAttribute("username", authentication.getName());
         }
+
+        // Add dashboard statistics
+        model.addAttribute("totalProducts", productRepository.count());
+        model.addAttribute("lowStockCount", productRepository.countByQuantityInStockLessThan(10)); // Assuming you have this method
+        model.addAttribute("pendingOrders", orderService.countByWorkflowStatus("PENDING")); // Assuming you have this method
+        model.addAttribute("totalUsers", userRepository.count());
+
+        // Add recent activity (you'll need to implement this in your LogEntryService)
+        // model.addAttribute("recentActivity", logEntryService.findRecentActivity(5));
+
+        // Add other necessary attributes
+        if (!model.containsAttribute("orderForm")) {
+            model.addAttribute("orderForm", new OrderForm());
+        }
+
         model.addAttribute("users", userRepository.findAll());
         model.addAttribute("allRoles", Set.of("ADMIN", "PICKER", "PACKER", "DISPATCHER", "RECEIVER"));
         model.addAttribute("userDto", new UserDto());
+
+        List<String> workflowStatuses = List.of("PLANNING", "PICKING", "PACKING", "DISPATCHED");
+        model.addAttribute("workflowStatuses", workflowStatuses);
+
+        List<String> invoicePriorities = List.of("PRIORITY", "ACCURATE", "UNUSED");
+        model.addAttribute("invoicePriorities", invoicePriorities);
+
         return "admin/dashboard";
+    }
+
+    @GetMapping("/stockView")
+    public String stockView(Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (userAuthenticated()) {
+            model.addAttribute("username", authentication.getName());
+        }
+
+        // Get all stock items
+        List<Stock> allStock = stockRepository.findAllWithProductAndLocation();
+        model.addAttribute("allStock", allStock);
+
+        // Get all products
+        List<Product> allProducts = productRepository.findAll();
+        model.addAttribute("allProducts", allProducts);
+
+        // Calculate total products count
+        long totalProductsCount = allProducts.size();
+        model.addAttribute("totalProductsCount", totalProductsCount);
+
+        // Calculate total items in stock
+        int totalItemsInStock = allStock.stream().mapToInt(Stock::getQuantity).sum();
+        model.addAttribute("totalItemsInStock", totalItemsInStock);
+
+        return "admin/stockView";
     }
 
 
@@ -93,6 +149,33 @@ public class AdminController {
         }
         model.addAttribute("users", userRepository.findAll());
         return "admin/users/users";
+    }
+
+    @PostMapping("/orders")
+    public String createOrder(@ModelAttribute("orderForm") @Valid OrderForm orderForm,
+                              BindingResult bindingResult,
+                              RedirectAttributes redirectAttributes) {
+
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.orderForm", bindingResult);
+            redirectAttributes.addFlashAttribute("orderForm", orderForm);
+            return "redirect:/admin/dashboard";
+        }
+
+        try {
+            // Create the order
+            Order order = orderService.createOrder(orderForm.getWorkflowStatus());
+
+            // Create the invoice
+            pickingService.createInvoice(order.getId(), orderForm.getInvoicePriority());
+
+            redirectAttributes.addFlashAttribute("successMessage", "Order and invoice created successfully!");
+            return "redirect:/admin/dashboard";
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Error creating order: " + e.getMessage());
+            return "redirect:/admin/dashboard";
+        }
     }
 
     private boolean userAuthenticated() {
@@ -161,6 +244,13 @@ public class AdminController {
         model.addAttribute("allRoles", Set.of("ADMIN", "PICKER", "PACKER", "DISPATCHER", "RECEIVER"));
         return "admin/users/edit";
     }
+
+    // Serve the add product page
+    @GetMapping("/products/add")
+    public String showAddProductForm(Model model) {
+        model.addAttribute("product", new Product());
+        return "admin/add-product";
+    }
     
     @PutMapping("/users/{id}")
     public String updateUser(@PathVariable Long id, @Valid @ModelAttribute("user") UserDto userDto, 
@@ -198,6 +288,42 @@ public class AdminController {
     public String deleteUser(@PathVariable Long id) {
         userRepository.deleteById(id);
         return "redirect:/admin/users";
+    }
+
+    @PostMapping("/products/add")
+    public String addProduct(@Valid @ModelAttribute("product") Product product,
+                           BindingResult result,
+                           RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            return "admin/add-product";
+        }
+
+        try {
+            // Set default values
+            product.setLastUpdated(LocalDateTime.now());
+            product.setStatus("ACTIVE");
+            
+            // If expiry date is empty, set it to null
+            if (product.getExpiryDate() != null && product.getExpiryDate().toString().isEmpty()) {
+                product.setExpiryDate(null);
+            }
+            
+            // Set default values if not provided
+            if (product.getReorderLevel() == null) {
+                product.setReorderLevel(10);
+            }
+            if (product.getStorageType() == null || product.getStorageType().isEmpty()) {
+                product.setStorageType("GENERAL");
+            }
+            
+            productRepository.save(product);
+            redirectAttributes.addFlashAttribute("success", "Product added successfully!");
+            return "redirect:/admin/dashboard";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error adding product: " + e.getMessage());
+            e.printStackTrace(); // Add this for debugging
+            return "redirect:/admin/products/add";
+        }
     }
 
     // Serve the stock view page
@@ -305,4 +431,7 @@ public class AdminController {
             return ResponseEntity.internalServerError().body("{\"error\": \"Error resetting system: " + e.getMessage() + "\"}");
         }
     }
+
+
+
 }

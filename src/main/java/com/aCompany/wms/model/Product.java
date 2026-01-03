@@ -2,6 +2,9 @@ package com.aCompany.wms.model;
 
 import com.aCompany.wms.entity.Location;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
@@ -12,17 +15,23 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String sku;
-    
+    @NotBlank(message = "SKU is required")
     @Column(nullable = false, unique = true)
+    private String sku;
+
+    @NotBlank(message = "Name is required")
+    @Column(nullable = false)
     private String name;
     
     private String description;
-    
+
+    @NotNull(message = "Price is required")
+    @Min(value = 0, message = "Price must be positive")
     @Column(nullable = false)
     private Double price;
-    
+
+    @NotNull(message = "Quantity is required")
+    @Min(value = 0, message = "Quantity cannot be negative")
     @Column(nullable = false)
     private Integer quantityInStock;
 
@@ -41,7 +50,7 @@ public class Product {
     @Column(nullable = false)
     private String batchNumber;
 
-    @Column(nullable = false)
+    @Column(name = "expiry_date", nullable = true, columnDefinition = "TIMESTAMP NULL")
     private LocalDateTime expiryDate;
 
     @Column(name = "reorder_level", nullable = false)
@@ -145,6 +154,10 @@ public class Product {
         this.lastUpdated = now;
     }
 
+    public String getStatus() {
+        return status;
+    }
+    
     public void setStatus(String outOfStock) {
         this.status = outOfStock;
     }
@@ -153,10 +166,18 @@ public class Product {
         this.product = productNotFound;
     }
 
+    public String getBatchNumber() {
+        return batchNumber;
+    }
+    
     public void setBatchNumber(String s) {
         this.batchNumber = s;
     }
 
+    public LocalDateTime getExpiryDate() {
+        return expiryDate;
+    }
+    
     public void setExpiryDate(LocalDateTime expiryDate) {
         this.expiryDate = expiryDate;
     }
@@ -175,5 +196,17 @@ public class Product {
 
     public void setStorageType(String storageType) {
         this.storageType = storageType;
+    }
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamps() {
+        this.lastUpdated = LocalDateTime.now();
+        if (this.reorderLevel == null) {
+            this.reorderLevel = 10; // Default reorder level
+        }
+        if (this.storageType == null) {
+            this.storageType = "GENERAL"; // Default storage type
+        }
     }
 }

@@ -7,6 +7,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;  // Add this import
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -25,12 +26,22 @@ public class Order {
         this.workflowStatus = dispatched;
     }
 
-    public Object getId() {
+    public Long getId() {
         return id;
     }
 
     public List<Invoice> getInvoices() {
+        if (invoices == null) {
+            invoices = new ArrayList<>();
+        }
         return invoices;
-        
+    }
+
+    public void setCreatedAt(LocalDateTime now) {
+        this.createdAt = now;
+    }
+
+    public void setInvoices(List<Invoice> invoices) {
+        this.invoices = invoices;
     }
 }

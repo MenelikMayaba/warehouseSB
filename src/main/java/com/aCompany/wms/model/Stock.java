@@ -172,4 +172,16 @@ public class Stock {
     public void setUpdatedAt(LocalDateTime now) {
         this.lastUpdated = now;
     }
+
+    @Override
+    public String toString() {
+        return "Stock{" +
+                "id=" + id +
+                ", product=" + (product != null ? product.getName() + " (ID: " + product.getId() + ")" : "null") +
+                ", location=" + (location != null ? location.getName() : "null") +
+                ", quantity=" + quantity +
+                ", batchNumber='" + batchNumber + '\'' +
+                ", status='" + status + '\'' +
+                '}';
+    }
 }

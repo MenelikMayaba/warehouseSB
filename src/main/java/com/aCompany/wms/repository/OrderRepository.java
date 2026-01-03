@@ -14,5 +14,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o WHERE o.workflowStatus = 'PLANNING' ORDER BY o.createdAt ASC")
     List<Order> getPlannedOrders();
+    
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.workflowStatus = :status")
+    long countByWorkflowStatus(String status);
 }
 

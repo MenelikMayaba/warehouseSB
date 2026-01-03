@@ -23,6 +23,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Find products by status
     List<Product> findByStatus(String status);
 
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.quantityInStock < :threshold")
+    long countByQuantityInStockLessThan(@Param("threshold") int threshold);
+
+
+    @Query("SELECT p FROM Product p " +
+            "WHERE LOWER(p.sku) LIKE LOWER(concat('%', :searchKey, '%')) " +
+            "OR LOWER(p.name) LIKE LOWER(concat('%', :searchKey, '%'))")
+    List<Product> searchProducts(@Param("searchKey") String searchKey);
+
     // Find products with quantity less than the specified threshold
     @Query("SELECT p FROM Product p WHERE p.quantityInStock < :threshold")
     List<Product> findByQuantityLessThan(@Param("threshold") int threshold);

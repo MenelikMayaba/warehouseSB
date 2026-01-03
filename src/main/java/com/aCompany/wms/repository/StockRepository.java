@@ -13,6 +13,9 @@ import java.util.Optional;
 
 @Repository
 public interface StockRepository extends JpaRepository<Stock, Long> {
+    @Query("SELECT s FROM Stock s LEFT JOIN FETCH s.product p LEFT JOIN FETCH s.location l")
+    List<Stock> findAllWithProductAndLocation();
+
     Optional<Stock> findByProduct(Product product);
     
     @Query("SELECT s FROM Stock s WHERE s.quantity < (SELECT p.reorderLevel FROM Product p WHERE p = s.product)")

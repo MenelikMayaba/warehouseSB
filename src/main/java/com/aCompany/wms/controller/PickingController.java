@@ -10,16 +10,39 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 @Controller
-@RequestMapping("/picking")
+@RequestMapping("/picker")
 public class PickingController {
+    private static final int DEFAULT_PAGE_SIZE = 10;
+
     @Autowired
     private PickingService pickingService;
 
     @GetMapping
-    public String viewPickingPage(Model model) {
-        model.addAttribute("invoices", pickingService.getPriorityOrders());
-        return "picking";
+    public String viewPickingPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+
+        // Get the total number of tasks
+        List<Invoice> allTasks = pickingService.getPriorityOrders();
+        int totalTasks = allTasks.size();
+        int totalPages = (int) Math.ceil((double) totalTasks / size);
+
+        // Apply pagination
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, totalTasks);
+        List<Invoice> pagedTasks = allTasks.subList(fromIndex, toIndex);
+
+        // Add attributes to the model
+        model.addAttribute("pickingTasks", pagedTasks);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalTasks", totalTasks);
+
+        return "/pickerUI/pickerDashboard";
     }
 
     @PostMapping("/pick/{id}")

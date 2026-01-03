@@ -29,7 +29,7 @@
         <div class="container">
             <a class="navbar-brand" href="/">Warehouse SB</a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" th:href="@{/receiving}">Back to Dashboard</a>
+                <a class="nav-link" th:href="${#authorization.expression('hasRole(''ROLE_ADMIN'')') ? '/admin/dashboard' : '/receiving'}">Back to Dashboard</a>
                 <span class="nav-item nav-link">Welcome, <span th:text="${#authentication.name}"></span></span>
                 <a class="nav-link" th:href="@{/logout}">Logout</a>
             </div>

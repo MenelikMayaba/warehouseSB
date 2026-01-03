@@ -11,5 +11,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     List<Invoice> findByPickedFalseAndStatus(String status);
 
     List<Invoice> findByPickedFalseOrderByOrder_CreatedAtAsc();
+
+    boolean existsByOrderId(Long orderId);
 }
 

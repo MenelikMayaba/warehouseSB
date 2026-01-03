@@ -35,5 +35,13 @@ public class Invoice {
     public void setStatus(String priority) {
         this.status = priority;
     }
+
+    public void setOrder(Order order) {
+        this.order = order;
+    }
+
+    public Order getOrder() {
+        return order;
+    }
 }
 
