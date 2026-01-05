@@ -30,9 +30,6 @@ public class ReceivingRecord {
 
     private int putAwayQuantity = 0;
 
-    public int getRemainingQuantity() {
-        return this.quantity - this.putAwayQuantity;
-    }
 
     public int getPutAwayQuantity() {
         return putAwayQuantity;
@@ -122,6 +119,11 @@ public class ReceivingRecord {
 
     public int getQuantity() {
         return quantity;
+    }
+
+    @Transient
+    public int getRemainingQuantity() {
+        return this.quantity - this.putAwayQuantity;
     }
 }
 

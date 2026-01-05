@@ -1,14 +1,12 @@
 package com.aCompany.wms.service;
 
 import com.aCompany.wms.entity.Location;
+import com.aCompany.wms.entity.LocationType;
 import com.aCompany.wms.entity.ReceivingRecord;
 import com.aCompany.wms.entity.ReceivingStatus;
 import com.aCompany.wms.model.TransactionType;
 import com.aCompany.wms.model.*;
-import com.aCompany.wms.repository.ProductRepository;
-import com.aCompany.wms.repository.ReceivingRepository;
-import com.aCompany.wms.repository.StockRepository;
-import com.aCompany.wms.repository.StockTransactionRepository;
+import com.aCompany.wms.repository.*;
 import com.aCompany.wms.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,95 +30,107 @@ public class ReceivingService {
     @Autowired
     private StockTransactionRepository transactionRepository;
 
+    @Autowired
+    private LocationRepository locationRepository;
+
+    private int newRemainingQuantity;
+
+
     @Transactional
-    public void receiveStock(String sku, int quantity, Location receivingLocation) {
-        // Validate product exists
+    public void receiveStock(String sku, int quantity, Long locationId, String username) {
+        // Find the product by SKU
         Product product = productRepository.findBySku(sku)
                 .orElseThrow(() -> new RuntimeException("Product not found with SKU: " + sku));
 
-        // Create receiving record
-        ReceivingRecord record = new ReceivingRecord();
-        record.setSku(sku);
-        record.setProduct(product);
-        record.setQuantity(quantity);
-        record.setAllocatedLocation(receivingLocation);
-        record.setReceivedAt(LocalDateTime.now());
-        record.setReceivedBy(SecurityUtil.getCurrentUsername());
-        record.setStatus(ReceivingStatus.RECEIVED);
-        record.setSource("SUPPLIER");
+        // Find the receiving location
+        Location receivingLocation = locationRepository.findByType(LocationType.RECEIVING)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Receiving location not found"));
 
-        receivingRepository.save(record);
+        // Create a new receiving record
+        ReceivingRecord receivingRecord = new ReceivingRecord();
+        receivingRecord.setSku(sku);
+        receivingRecord.setProduct(product);
+        receivingRecord.setQuantity(quantity);
+        receivingRecord.setSource("MANUAL_RECEIPT");
+        receivingRecord.setReceivedAt(LocalDateTime.now());
+        receivingRecord.setReceivedBy(username);
+        receivingRecord.setStatus(ReceivingStatus.RECEIVED);
+        receivingRecord.setAllocatedLocation(receivingLocation);
 
-        // Create stock transaction
-        StockTransaction tx = new StockTransaction();
-        tx.setType(TransactionType.RECEIVED);
-        tx.setQuantity(quantity);
-        tx.setProduct(product);
-        tx.setTimestamp(LocalDateTime.now());
-        tx.setPerformedBy(SecurityUtil.getCurrentUsername());
-        tx.setReferenceNumber("RECEIVING-" + record.getId());
+        // Save the receiving record
+        receivingRepository.save(receivingRecord);
 
-        transactionRepository.save(tx);
+        // Log the transaction
+        StockTransaction transaction = new StockTransaction();
+        transaction.setProduct(product);
+        transaction.setQuantity(quantity);
+        transaction.setType(TransactionType.RECEIVED);
+        transaction.setReferenceNumber("RECEIVING-" + receivingRecord.getId());
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setScannedBy(username);
+        transaction.setLocation(receivingLocation);
+
+        transactionRepository.save(transaction);
     }
 
     @Transactional
-    public void putAway(String sku, int quantity, Location warehouseLocation) {
-        // Find the oldest received but not yet put away stock
-        List<ReceivingRecord> receivedStock = receivingRepository
-                .findBySkuAndStatusOrderByReceivedAtAsc(sku, ReceivingStatus.RECEIVED);
+    public void putAway(Long receivingRecordId, Long locationId, int quantity, String username) {
+        // Find the receiving record
+        ReceivingRecord receivingRecord = receivingRepository.findById(receivingRecordId)
+                .orElseThrow(() -> new RuntimeException("Receiving record not found"));
 
-        if (receivedStock.isEmpty()) {
-            throw new RuntimeException("No received stock found for SKU: " + sku);
+        // Validate the quantity
+        if (quantity <= 0) {
+            throw new RuntimeException("Quantity must be greater than zero");
         }
 
-        int remainingToPutAway = quantity;
-
-        for (ReceivingRecord record : receivedStock) {
-            if (remainingToPutAway <= 0) break;
-
-            int quantityToMove = Math.min(record.getRemainingQuantity(), remainingToPutAway);
-
-            // Update receiving record
-            record.setPutAwayQuantity(record.getPutAwayQuantity() + quantityToMove);
-            if (record.getPutAwayQuantity() >= record.getQuantity()) {
-                record.setStatus(ReceivingStatus.PUT_AWAY);
-            }
-            receivingRepository.save(record);
-
-            // Update or create stock in warehouse
-            Product product = productRepository.findBySku(sku)
-                    .orElseThrow(() -> new RuntimeException("Product not found with SKU: " + sku));
-
-            Stock stock = stockRepository.findByProductIdAndLocationId(product.getId(), warehouseLocation.getId())
-                    .orElseGet(() -> {
-                        Stock newStock = new Stock();
-                        newStock.setProduct(product);
-                        newStock.setLocation(warehouseLocation);
-                        newStock.setQuantity(0);
-                        return newStock;
-                    });
-
-            stock.setQuantity(stock.getQuantity() + quantityToMove);
-            stockRepository.save(stock);
-
-            // Create stock transaction
-            StockTransaction tx = new StockTransaction();
-            tx.setType(TransactionType.PUT_AWAY);
-            tx.setQuantity(quantityToMove);
-            tx.setProduct(record.getProduct());
-            tx.setSourceLocation(record.getAllocatedLocation().getName()); // Assuming getAllocatedLocation() returns a StockLocation with getName()
-            tx.setDestinationLocation(warehouseLocation.getName()); // Assuming warehouseLocation is a StockLocation with getName()
-            tx.setTimestamp(LocalDateTime.now());
-            tx.setPerformedBy(SecurityUtil.getCurrentUsername());
-            tx.setReferenceNumber("PUT_AWAY-REC-" + record.getId());
-            transactionRepository.save(tx);
-
-            remainingToPutAway -= quantityToMove;
+        if (quantity > receivingRecord.getRemainingQuantity()) {
+            throw new RuntimeException("Cannot put away more than the remaining quantity");
         }
 
-        if (remainingToPutAway > 0) {
-            throw new RuntimeException("Insufficient received stock to put away. Remaining: " + remainingToPutAway);
+        // Find the destination location
+        Location destinationLocation = locationRepository.findById(locationId)
+                .orElseThrow(() -> new RuntimeException("Destination location not found"));
+
+        // Find or create stock in the destination location
+        Stock stock = stockRepository.findBySkuAndLocationId(receivingRecord.getSku(), locationId)
+                .orElseGet(() -> {
+                    Stock newStock = new Stock();
+                    newStock.setSku(receivingRecord.getSku());
+                    newStock.setProduct(receivingRecord.getProduct());
+                    newStock.setLocation(destinationLocation);
+                    newStock.setQuantity(0);
+                    return newStock;
+                });
+
+        // Update the stock quantity
+        stock.setQuantity(stock.getQuantity() + quantity);
+        stockRepository.save(stock);
+
+        // Update the receiving record by increasing putAwayQuantity
+        receivingRecord.setPutAwayQuantity(receivingRecord.getPutAwayQuantity() + quantity);
+
+        // If all quantity has been put away, mark as complete
+        if (receivingRecord.getRemainingQuantity() == 0) {
+            receivingRecord.setStatus(ReceivingStatus.PUT_AWAY_COMPLETE);
         }
+
+        receivingRepository.save(receivingRecord);
+
+        // Log the transaction
+        StockTransaction transaction = new StockTransaction();
+        transaction.setProduct(receivingRecord.getProduct());
+        transaction.setQuantity(quantity);
+        transaction.setType(TransactionType.PUT_AWAY);
+        transaction.setReferenceNumber("PUT-AWAY-" + receivingRecord.getId());
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setScannedBy(username);
+        transaction.setLocation(destinationLocation);
+
+        transactionRepository.save(transaction);
     }
+
 }
 

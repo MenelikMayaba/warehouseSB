@@ -7,5 +7,6 @@ package com.aCompany.wms.entity;
  */
 public enum ReceivingStatus {
     RECEIVED,   // Stock received but not yet put away
-    PUT_AWAY    // Stock has been moved to warehouse
+    PUT_AWAY_COMPLETE,    // Stock has been moved to warehouse
+    CANCELLED
 }

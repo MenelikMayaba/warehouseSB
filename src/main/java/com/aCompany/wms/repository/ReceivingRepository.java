@@ -12,6 +12,10 @@ import java.util.List;
 
 @Repository
 public interface ReceivingRepository extends JpaRepository<ReceivingRecord, Long> {
+    @Query("SELECT r FROM ReceivingRecord r WHERE r.status = :status AND (r.quantity - r.putAwayQuantity) > :minRemainingQuantity")
+    List<ReceivingRecord> findByStatusAndRemainingQuantityGreaterThan(
+            @Param("status") ReceivingStatus status, 
+            @Param("minRemainingQuantity") int minRemainingQuantity);
 
     @EntityGraph(attributePaths = {"product"})
     @Query("SELECT r FROM ReceivingRecord r WHERE r.status = :status")

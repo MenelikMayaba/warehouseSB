@@ -15,4 +15,6 @@ public interface LocationRepository extends JpaRepository<Location, Long> {
     List<Location> findByActive(boolean active);
 
     boolean existsByCode(String code);
+    
+    List<Location> findByTypeNot(LocationType type);
 }

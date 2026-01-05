@@ -83,7 +83,7 @@
                                 <option value="" selected disabled>Select a location</option>
                                 <option th:each="location : ${locations}" 
                                         th:value="${location.id}" 
-                                        th:text="${location.name + ' (' + location.aisle + ')'}">
+                                        th:text="${location.name + ' (' + location.code + ')'}">
                                 </option>
                             </select>
                             <div class="invalid-feedback">
@@ -93,7 +93,7 @@
                         
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-upc-scan"></i> Process Receipt
+                                <i class="bi bi-upc-scan"></i> Scan to Receiving
                             </button>
                         </div>
                     </form>

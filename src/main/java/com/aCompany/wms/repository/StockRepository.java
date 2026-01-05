@@ -16,6 +16,9 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     @Query("SELECT s FROM Stock s LEFT JOIN FETCH s.product p LEFT JOIN FETCH s.location l")
     List<Stock> findAllWithProductAndLocation();
 
+    @Query("SELECT s FROM Stock s WHERE s.product.sku = :sku AND s.location.id = :locationId")
+    Optional<Stock> findBySkuAndLocationId(@Param("sku") String sku, @Param("locationId") Long locationId);
+
     Optional<Stock> findByProduct(Product product);
     
     @Query("SELECT s FROM Stock s WHERE s.quantity < (SELECT p.reorderLevel FROM Product p WHERE p = s.product)")

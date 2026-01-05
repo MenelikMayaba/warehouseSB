@@ -30,8 +30,9 @@ public class Location {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(columnDefinition = "VARCHAR(20) CHECK (type IN ('PICKING', 'STORAGE', 'RECEIVING', 'SHIPPING', 'HIGH_FREQUENCY', 'COLD_STORAGE', 'BULK_STORAGE'))")
     private LocationType type;
+
 
     @Column(name = "is_active", nullable = false)
     private boolean active = true;

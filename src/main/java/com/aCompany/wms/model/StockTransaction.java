@@ -143,4 +143,5 @@ public class StockTransaction {
         this.location = location;
     }
 
+
 }

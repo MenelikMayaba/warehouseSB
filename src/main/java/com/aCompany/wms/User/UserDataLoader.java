@@ -46,7 +46,7 @@ public class UserDataLoader implements CommandLineRunner {
 
             User receiver = new User();
             receiver.setUsername("receiver");
-            receiver.setPassword(passwordEncoder.encode("receive123"));
+            receiver.setPassword(passwordEncoder.encode("receiver123"));
             receiver.setRoles(Set.of(Role.RECEIVER));
             userRepository.save(receiver);
 

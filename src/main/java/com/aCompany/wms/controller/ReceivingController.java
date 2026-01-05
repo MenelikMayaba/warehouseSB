@@ -1,19 +1,19 @@
 package com.aCompany.wms.controller;
 
+import com.aCompany.wms.dto.ReceivingForm;
 import com.aCompany.wms.entity.Location;
+import com.aCompany.wms.entity.LocationType;
 import com.aCompany.wms.entity.ReceivingRecord;
 import com.aCompany.wms.entity.ReceivingStatus;
 import com.aCompany.wms.repository.LocationRepository;
 import com.aCompany.wms.repository.ReceivingRepository;
+import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
 import com.aCompany.wms.service.ReceivingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -40,31 +40,70 @@ public class ReceivingController {
 
     @GetMapping("/scan-to-warehouse")
     public String showScanToWarehouseForm(Model model) {
-        model.addAttribute("locations", locationRepository.findAll());
-        return "/receivingUI/scan-to-warehouse";
+        // Get all locations except RECEIVING for the dropdown
+        List<Location> locations = locationRepository.findByTypeNot(LocationType.RECEIVING);
+        model.addAttribute("locations", locations);
+        model.addAttribute("receivingForm", new ReceivingForm());
+        return "receivingUI/scan-to-warehouse";
+    }
+
+    @PostMapping("/scan-to-warehouse")
+    public String receiveStock(@ModelAttribute ReceivingForm receivingForm,
+                               Authentication authentication,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            // Get the current user
+            String username = authentication.getName();
+
+            // Call the service to handle the receiving
+            receivingService.receiveStock(
+                    receivingForm.getSku(),
+                    receivingForm.getQuantity(),
+                    receivingForm.getLocationId(),
+                    username
+            );
+
+            redirectAttributes.addFlashAttribute("success", "Stock received successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error receiving stock: " + e.getMessage());
+        }
+
+        return "redirect:/receiving/scan-to-warehouse";
     }
 
     @GetMapping("/put-away")
-    public String showScanPutAway(Model model) {
-        model.addAttribute("locations", locationRepository.findAll());
+    public String showPutAwayPage(Model model) {
+        // Get all receiving records that need to be put away (status = RECEIVED and remainingQuantity > 0)
+        List<ReceivingRecord> receivingRecords = receivingRepository.findByStatusAndRemainingQuantityGreaterThan(
+                ReceivingStatus.RECEIVED, 0);
 
-        // Get all receiving records with their products
-        List<ReceivingRecord> receivingRecords = receivingRepository.findByStatus(ReceivingStatus.RECEIVED);
-
-        // Log the results for debugging
-        System.out.println("=== Receiving Records ===");
-        System.out.println("Found " + receivingRecords.size() + " receiving records");
-        receivingRecords.forEach(record -> {
-            System.out.println("Record ID: " + record.getId() +
-                    ", Product: " + (record.getProduct() != null ?
-                    record.getProduct().getName() + " (ID: " + record.getProduct().getId() + ")" : "null") +
-                    ", Qty: " + record.getQuantity() +
-                    ", Status: " + record.getStatus());
-        });
+        // Get all warehouse locations (excluding RECEIVING)
+        List<Location> warehouseLocations = locationRepository.findByTypeNot(LocationType.RECEIVING);
 
         model.addAttribute("receivingRecords", receivingRecords);
-        return "/receivingUI/put-away";
+        model.addAttribute("warehouseLocations", warehouseLocations);
 
+        return "receivingUI/put-away";
+    }
+
+    @PostMapping("/receiving/put-away")
+    public String putAwayStock(@RequestParam Long receivingRecordId,
+                               @RequestParam Long locationId,
+                               @RequestParam int quantity,
+                               Authentication authentication,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            String username = authentication.getName();
+
+            // Call the service to handle the put-away
+            receivingService.putAway(receivingRecordId, locationId, quantity, username);
+
+            redirectAttributes.addFlashAttribute("success", "Stock put away successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error putting away stock: " + e.getMessage());
+        }
+
+        return "redirect:/receiving/put-away";
     }
 
 
@@ -73,13 +112,14 @@ public class ReceivingController {
             @RequestParam String sku,
             @RequestParam int quantity,
             @RequestParam Long locationId,
+            Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
         try {
             Location location = locationRepository.findById(locationId)
                     .orElseThrow(() -> new RuntimeException("Location not found"));
 
-            receivingService.receiveStock(sku, quantity, location);
+            receivingService.receiveStock(sku, quantity, locationId, authentication.getName());
             redirectAttributes.addFlashAttribute("success", "Successfully received " + quantity + " items of SKU: " + sku);
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error receiving stock: " + e.getMessage());
@@ -91,26 +131,29 @@ public class ReceivingController {
 
     @PostMapping("/put-away")
     public String putAwayStock(
+            @RequestParam Long receivingRecordId,
             @RequestParam String sku,
             @RequestParam int quantity,
-            @RequestParam Long fromLocationId,
             @RequestParam Long toLocationId,
+            Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
         try {
-            // Get the source and destination locations
-            Location fromLocation = locationRepository.findById(fromLocationId)
-                    .orElseThrow(() -> new RuntimeException("Source location not found"));
-
+            // Get the destination location (warehouse location)
             Location toLocation = locationRepository.findById(toLocationId)
                     .orElseThrow(() -> new RuntimeException("Destination location not found"));
 
+            // Get the receiving location (source)
+            Location fromLocation = locationRepository.findByCode("RECEIVING")
+                    .orElseThrow(() -> new RuntimeException("Receiving location not found"));
+
             // Call the service to handle the put-away logic
-            receivingService.putAway(sku, quantity, toLocation);
+            String username = authentication.getName();
+            receivingService.putAway(receivingRecordId, toLocationId, quantity, username);
 
             redirectAttributes.addFlashAttribute("success",
-                    String.format("Successfully put away %d items of SKU: %s from %s to %s",
-                            quantity, sku, fromLocation.getName(), toLocation.getName()));
+                    String.format("Successfully put away %d items of SKU: %s to %s",
+                            quantity, sku, toLocation.getName()));
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error",
@@ -118,7 +161,7 @@ public class ReceivingController {
             return "redirect:/receiving/put-away";
         }
 
-        return "redirect:/put-away";
+        return "redirect:/receiving/put-away";
     }
 
 }
