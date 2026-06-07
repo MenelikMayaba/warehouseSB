@@ -326,12 +326,6 @@ public class AdminController {
         }
     }
 
-    // Serve the stock view page
-    @GetMapping("/admin/stockView")
-    public ResponseEntity<ApiResponse<List<Product>>> getAllStockApi() {
-        return ResponseEntity.ok(ApiResponse.success(stockService.getAllStock()));
-    }
-
     // Serve the admin logs page
     @GetMapping("/adminLogs")
     public String viewAdminLogs(

@@ -170,7 +170,7 @@ public class Stock {
     }
 
     public void setUpdatedAt(LocalDateTime now) {
-        this.lastUpdated = now;
+        this.updatedAt = now;
     }
 
     @Override
