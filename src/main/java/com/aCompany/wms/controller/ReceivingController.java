@@ -7,6 +7,7 @@ import com.aCompany.wms.entity.ReceivingRecord;
 import com.aCompany.wms.entity.ReceivingStatus;
 import com.aCompany.wms.repository.LocationRepository;
 import com.aCompany.wms.repository.ReceivingRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
 import com.aCompany.wms.service.ReceivingService;
@@ -20,7 +21,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/receiving")
-@PreAuthorize("hasRole('RECEIVING', 'ADMIN')")
+@PreAuthorize("hasAnyRole('RECEIVER', 'ADMIN')")
 public class ReceivingController {
 
     @Autowired
@@ -86,25 +87,14 @@ public class ReceivingController {
         return "receivingUI/put-away";
     }
 
-    @PostMapping("/receiving/put-away")
-    public String putAwayStock(@RequestParam Long receivingRecordId,
-                               @RequestParam Long locationId,
-                               @RequestParam int quantity,
-                               Authentication authentication,
-                               RedirectAttributes redirectAttributes) {
-        try {
-            String username = authentication.getName();
-
-            // Call the service to handle the put-away
-            receivingService.putAway(receivingRecordId, locationId, quantity, username);
-
-            redirectAttributes.addFlashAttribute("success", "Stock put away successfully!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error putting away stock: " + e.getMessage());
-        }
-
-        return "redirect:/receiving/put-away";
+    @GetMapping("/pending")
+    @ResponseBody
+    public ResponseEntity<List<ReceivingRecord>> getPendingReceivingRecords() {
+        List<ReceivingRecord> pendingRecords = receivingRepository.findByStatusAndRemainingQuantityGreaterThan(
+                ReceivingStatus.RECEIVED, 0);
+        return ResponseEntity.ok(pendingRecords);
     }
+
 
 
     @PostMapping("/scan")
@@ -126,7 +116,7 @@ public class ReceivingController {
             return "redirect:/receiving/scan-to-warehouse";
         }
 
-        return "redirect:/scan-to-warehouse";
+        return "redirect:/receiving/scan-to-warehouse";
     }
 
     @PostMapping("/put-away")

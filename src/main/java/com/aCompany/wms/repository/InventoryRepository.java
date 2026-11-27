@@ -53,48 +53,6 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     @Query("SELECT SUM(i.quantity * i.product.price) FROM Inventory i")
     Optional<BigDecimal> calculateTotalInventoryValue();
 
-    @Query("SELECT t.type, COUNT(t) " +
-            "FROM InventoryTransaction t " +
-            "WHERE t.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY t.type")
-    List<Object[]> getMovementCountsByType(
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
-    );
-
-    @Query("SELECT COALESCE(t.toLocation, t.fromLocation) as location, COUNT(t) as movementCount " +
-            "FROM InventoryTransaction t " +
-            "WHERE t.createdAt BETWEEN :startDate AND :endDate " +
-            "AND (t.toLocation IS NOT NULL OR t.fromLocation IS NOT NULL) " +
-            "GROUP BY COALESCE(t.toLocation, t.fromLocation) " +
-            "ORDER BY movementCount DESC")
-    Page<Object[]> getBusiestLocations(
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            Pageable pageable);
-
-
-
-    @Query("SELECT COUNT(t) FROM InventoryTransaction t " +
-           "WHERE t.createdAt BETWEEN :startDate AND :endDate")
-    long countMovementsInDateRange(
-            @Param("startDate") LocalDate startDate, 
-            @Param("endDate") LocalDate endDate);
-
-
-
-    @Query(value = "SELECT t.product, COUNT(t) as movementCount, SUM(CASE WHEN t.type = 'RECEIVE' THEN t.quantity ELSE -t.quantity END) as netChange " +
-            "FROM InventoryTransaction t " +
-            "WHERE t.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY t.product " +
-            "ORDER BY movementCount DESC " +
-            "LIMIT :limit", 
-            nativeQuery = true)
-    List<Object[]> getMostMovedProducts(
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            @Param("limit") int limit);
-
     @Query("SELECT i FROM Inventory i " +
             "WHERE i.quantity > 0 AND i.quantity <= :threshold " +
             "ORDER BY i.quantity ASC")

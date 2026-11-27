@@ -41,44 +41,6 @@ public class StockService {
         this.stockRepository = stockRepository;
     }
 
-    @PreAuthorize("hasRole('RECEIVER')")
-    public Product receiveStock(StockReceiptDto receipt) {
-        // Find or create stock entry
-        Product item = productRepository.findByProductIdAndLocationIdAndBatchNumber(
-                receipt.productId(),
-                receipt.locationId(),
-                receipt.batchNumber()
-        ).orElseGet(() -> {
-            Product newProduct = new Product();
-            try {
-                newProduct.setProduct(productRepository.findById(receipt.productId())
-                        .orElseThrow(() -> new ProductNotFoundException("Product not found")));
-            } catch (ProductNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-            try {
-                newProduct.setLocation(locationRepository.findById(receipt.locationId())
-                        .orElseThrow(() -> new LocationNotFoundException("Location not found")));
-            } catch (LocationNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-            newProduct.setBatchNumber(receipt.batchNumber());
-            newProduct.setExpiryDate(receipt.expiryDate().atStartOfDay());
-            return newProduct;
-        });
-
-        // Update quantity
-        item.setQuantity(item.getQuantity() + receipt.quantity());
-        item.setLastUpdated(LocalDateTime.now());
-        productRepository.save(item);
-
-        // Log transaction
-        logTransaction(item, "RECEIVED", receipt.quantity(), receipt.referenceNumber(), receipt.notes());
-
-        return item;
-    }
-
-
     @PreAuthorize("hasRole('PICKER')")
     @Transactional
     public Stock pickStock(StockPickDto pick) throws StockNotFoundException, InsufficientStockException {
@@ -259,7 +221,7 @@ public class StockService {
         if (!productRepository.existsById(productId)) {
             throw new ProductNotFoundException("Product not found with ID: " + productId);
         }
-        if (!stockRepository.existsById(locationId)) {
+        if (!locationRepository.existsById(locationId)) {
             throw new LocationNotFoundException("Location not found with ID: " + locationId);
         }
     }

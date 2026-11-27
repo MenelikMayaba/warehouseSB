@@ -28,10 +28,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     long countByQuantityInStockLessThan(@Param("threshold") int threshold);
 
 
-    @Query("SELECT p FROM Product p " +
-            "WHERE LOWER(p.sku) LIKE LOWER(concat('%', :searchKey, '%')) " +
-            "OR LOWER(p.name) LIKE LOWER(concat('%', :searchKey, '%'))")
-    List<Product> searchProducts(@Param("searchKey") String searchKey);
 
     // Find products with quantity less than the specified threshold
     @Query("SELECT p FROM Product p WHERE p.quantityInStock < :threshold")
@@ -55,24 +51,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("locationId") Long locationId
     );
 
-    // Find available stock for a product at a location
-    @Query("SELECT s FROM Stock s " +
-            "WHERE s.product.id = :productId " +
-            "AND s.location.id = :locationId " +
-            "AND s.quantity > 0 " +
-            "ORDER BY s.expiryDate ASC NULLS LAST, s.manufacturingDate ASC NULLS LAST")
-    List<Stock> findAvailableStock(
-            @Param("productId") Long productId,
-            @Param("locationId") Long locationId
-    );
-
-    // Find low stock items
-    @Query("SELECT s FROM Stock s " +
-            "WHERE s.quantity > 0 AND s.quantity <= :threshold " +
-            "ORDER BY s.quantity ASC")
-    List<Stock> getLowStockItems(@Param("threshold") int threshold);
-
-    Optional<Product> findByProductIdAndLocationIdAndBatchNumber(Long aLong, Long aLong1, String s);
 
     List<Product> findByNameContainingIgnoreCaseOrSkuContainingIgnoreCase(String query, String query1);
 }

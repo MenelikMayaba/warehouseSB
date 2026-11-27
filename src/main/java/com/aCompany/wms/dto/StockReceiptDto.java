@@ -8,7 +8,7 @@ public class StockReceiptDto {
     private String batchNumber;
     private LocalDate expiryDate;
     private int quantity;
-    private String reference;
+    private String referenceNumber;
     private String notes;
 
 
@@ -29,8 +29,8 @@ public class StockReceiptDto {
         return quantity;
     }
 
-    public String reference() {
-        return reference;
+    public String referenceNumber() {
+        return referenceNumber;
     }
 
     public String notes() {
@@ -50,7 +50,7 @@ public class StockReceiptDto {
         this.productId = productId;
     }
 
-    public String referenceNumber() {
-        return reference;
+    public void setReferenceNumber(String referenceNumber) {
+        this.referenceNumber = referenceNumber;
     }
 }

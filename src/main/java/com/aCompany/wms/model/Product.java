@@ -44,9 +44,6 @@ public class Product {
     @Column(nullable = false)
     private String status;
 
-    @ManyToOne
-    private Product product;
-
     @Column(nullable = false)
     private String batchNumber;
 
@@ -134,36 +131,12 @@ public class Product {
         return sku;
     }
 
-    public int getQuantity() {
-        return quantityInStock;
-    }
-
-    public void setQuantity(int i) {
-        this.quantityInStock = i;
-    }
-
-    public void setLocation(Location location) {
-        this.location = location;
-    }
-
-    public void setLastUpdated(LocalDateTime now) {
-        this.lastUpdated = now;
-    }
-
-    public void setUpdatedAt(LocalDateTime now) {
-        this.lastUpdated = now;
-    }
-
     public String getStatus() {
         return status;
     }
     
     public void setStatus(String outOfStock) {
         this.status = outOfStock;
-    }
-
-    public void setProduct(Product productNotFound) {
-        this.product = productNotFound;
     }
 
     public String getBatchNumber() {
